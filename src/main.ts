@@ -1,13 +1,13 @@
 import * as THREE from "three";
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./cow";
 
 // Scene variables
-let renderer:THREE.WebGLRenderer
-let controls:OrbitControls
-let scene:THREE.Scene
-let camera:THREE.PerspectiveCamera;
-let clock:THREE.Clock;
+let renderer: THREE.WebGLRenderer;
+let controls: OrbitControls;
+let scene: THREE.Scene;
+let camera: THREE.PerspectiveCamera;
+let clock: THREE.Clock;
 
 // Array for all animals
 let animals: Cow[] = [];
@@ -15,61 +15,64 @@ let animals: Cow[] = [];
 let worldSize = 200;
 
 window.onload = function () {
-  // create scene
-  scene = new THREE.Scene();
-  
-  clock = new THREE.Clock();
+    // create scene
+    scene = new THREE.Scene();
 
-  // setup the camera
-  let fov = 75;
-  let ratio = window.innerWidth / window.innerHeight;
-  let zNear = 1;
-  let zFar = 10000;
-  camera = new THREE.PerspectiveCamera(fov, ratio, zNear, zFar);
-  camera.position.set(0, 150, 50);
+    // Clock used to determine when movement should occur. Delta time is used so framerate won't affect performance.
+    clock = new THREE.Clock();
 
-  // create renderer and add canvas
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+    // setup the camera
+    let fov = 75;
+    let ratio = window.innerWidth / window.innerHeight;
+    let zNear = 1;
+    let zFar = 10000;
+    camera = new THREE.PerspectiveCamera(fov, ratio, zNear, zFar);
+    camera.position.set(0, 150, 50);
 
-  // setup lights
-  let ambientLight = new THREE.AmbientLight();
-  scene.add(ambientLight);
+    // create renderer and add canvas
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-  let light = new THREE.DirectionalLight(0xffffff, 5.0);
-  light.position.set(10, 100, 10);
-  scene.add(light);
+    // setup lights
+    let ambientLight = new THREE.AmbientLight();
+    scene.add(ambientLight);
 
-  let planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
-  let planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide })
-  let plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    let light = new THREE.DirectionalLight(0xffffff, 5.0);
+    light.position.set(10, 100, 10);
+    scene.add(light);
 
-  // Make the plane lie horizontal on the XZ ground plane
-  plane.rotateX(Math.PI / 2);
-  plane.position.y -= 10.1;
-  scene.add(plane);
+    let planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
+    let planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    let plane = new THREE.Mesh(planeGeometry, planeMaterial);
 
-  // Add cow ()
-  let cow = new Cow(0, scene, animals);
-  let cow2 = new Cow(1, scene, animals);
-  // setup interaction
-  controls = new OrbitControls(camera, renderer.domElement);
+    // Make the plane lie horizontal on the XZ ground plane
+    plane.rotateX(Math.PI / 2);
+    plane.position.y -= 10.1; // Move plane down slightly past cube to avoid clipping.
+    scene.add(plane);
 
-  // call animation/rendering loop
-  animate();
+    // Add cow ()
+    let cow = new Cow(0, scene, animals);
+    let cow2 = new Cow(1, scene, animals);
+
+
+    // setup interaction
+    controls = new OrbitControls(camera, renderer.domElement);
+    
+    // call animation/rendering loop
+    animate();
 };
 
 function animate() {
-  requestAnimationFrame(animate);
-  
-  // Change in delta time used to calculate movements.
-  let deltaTime = clock.getDelta();
+    requestAnimationFrame(animate);
 
-  animals.forEach(animal => {
-    animal.animate(deltaTime);
-  });
-  
-  controls.update();
-  renderer.render(scene, camera);
+    // Change in delta time used to calculate movements.
+    let deltaTime = clock.getDelta();
+
+    animals.forEach((animal) => {
+        animal.animate(deltaTime);
+    });
+
+    controls.update();
+    renderer.render(scene, camera);
 }
