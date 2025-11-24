@@ -1,11 +1,16 @@
-import * as THREE from 'three';
+import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import Cow from './cow.js'
+import Cow from "./cow";
 
 // Scene variables
-let renderer, controls, scene, camera;
+let renderer:THREE.WebGLRenderer
+let controls:OrbitControls
+let scene:THREE.Scene
+let camera:THREE.PerspectiveCamera;
+let clock:THREE.Clock;
+
 // Array for all animals
-let animals = [];
+let animals: Cow[] = [];
 
 let worldSize = 200;
 
@@ -13,6 +18,8 @@ window.onload = function () {
   // create scene
   scene = new THREE.Scene();
   
+  clock = new THREE.Clock();
+
   // setup the camera
   let fov = 75;
   let ratio = window.innerWidth / window.innerHeight;
@@ -37,14 +44,15 @@ window.onload = function () {
   let planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
   let planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide })
   let plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
   // Make the plane lie horizontal on the XZ ground plane
   plane.rotateX(Math.PI / 2);
   plane.position.y -= 10.1;
   scene.add(plane);
 
   // Add cow ()
-  let cow = new Cow(scene, animals);
-
+  let cow = new Cow(0, scene, animals);
+  let cow2 = new Cow(1, scene, animals);
   // setup interaction
   controls = new OrbitControls(camera, renderer.domElement);
 
@@ -54,10 +62,14 @@ window.onload = function () {
 
 function animate() {
   requestAnimationFrame(animate);
+  
+  // Change in delta time used to calculate movements.
+  let deltaTime = clock.getDelta();
+
   animals.forEach(animal => {
-    animal.animate();
-    console.log(animal.cube.position);
-   });
+    animal.animate(deltaTime);
+  });
+  
   controls.update();
   renderer.render(scene, camera);
 }
