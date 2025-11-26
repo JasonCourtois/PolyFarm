@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./cow";
+import random from "./utils";
 
 // Scene variables
 let renderer: THREE.WebGLRenderer;
@@ -12,7 +13,7 @@ let clock: THREE.Clock;
 // Array for all animals
 let animals: Cow[] = [];
 
-let worldSize = 200;
+let worldSize = 400;
 
 window.onload = function () {
     // create scene
@@ -51,14 +52,20 @@ window.onload = function () {
     plane.position.y -= 10.1; // Move plane down slightly past cube to avoid clipping.
     scene.add(plane);
 
-    // Add cow ()
-    let cow = new Cow(0, scene, animals);
-    let cow2 = new Cow(1, scene, animals);
+    // Add cows
+    for (let i = 0; i < 100; i++) {
+        // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
+        let x = random(-worldSize/2, worldSize/2);
+        let z = random(-worldSize/2, worldSize/2);
 
+        let cow = new Cow(x, z, i);
+        animals.push(cow);
+        scene.add(cow.mesh);
+    }
 
     // setup interaction
     controls = new OrbitControls(camera, renderer.domElement);
-    
+
     // call animation/rendering loop
     animate();
 };
