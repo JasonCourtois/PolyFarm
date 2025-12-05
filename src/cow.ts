@@ -10,7 +10,8 @@ class Cow {
     private moveInterval: number; // How many seconds until next move should occur.
 
     // Private preset properties
-    private speed = 0.4; // Speed of movement - larger numbers will look like teleportation.
+    private speed = 20; // Speed of movement - larger numbers will look like teleportation.
+    private rotationSpeed = 4; // Rotation speed in radians per second
     private minDistance = 15;
     private maxDistance = 50;
     private minMoveInterval = 3;
@@ -114,12 +115,12 @@ class Cow {
                 mouseQuaternion.y = Math.sin(adjustedAngle);
                 mouseQuaternion.w = Math.cos(adjustedAngle);
                 
-                this.mesh.quaternion.slerp(mouseQuaternion, 0.05);
+                this.mesh.quaternion.slerp(mouseQuaternion, Math.min(1, this.rotationSpeed * deltaTime));
 
                 // If close enough to the mouse, stop moving.
                 if (distance < 25) return;
 
-                this.mesh.translateX(this.speed * 0.5);
+                this.mesh.translateX(this.speed * 0.5 * deltaTime);
 
                 return;
             }
@@ -138,7 +139,7 @@ class Cow {
                 }
                 break;
             case "rotating":
-                this.mesh.quaternion.slerp(this.quaternion, 0.05); // Apply rotation.
+                this.mesh.quaternion.slerp(this.quaternion, Math.min(1, this.rotationSpeed * deltaTime)); // Apply rotation.
 
                 // To check if cube is done rotating, check if the angle to new quaternion is within 0.01.
                 if (this.mesh.quaternion.angleTo(this.quaternion) < 0.5) {
@@ -147,8 +148,8 @@ class Cow {
                 }
                 break;
             case "moving":
-                this.distanceToMove -= this.speed;
-                this.mesh.translateX(this.speed);
+                this.distanceToMove -= this.speed * deltaTime;
+                this.mesh.translateX(this.speed * deltaTime);
 
                 if (this.distanceToMove < 0) {
                     this.state = "waiting";
