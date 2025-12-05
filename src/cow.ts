@@ -49,7 +49,7 @@ class Cow {
         this.id = id;
 
         // Determine when first move should occur.
-            this.moveInterval = this.generateMoveInterval();
+        this.moveInterval = this.generateMoveInterval();
 
         loader.load("./Blender/cow.glb", (gltf) => {
             scene.add(gltf.scene);
@@ -122,19 +122,22 @@ class Cow {
 
             let distance = this.getEuclidianDistnace(deltaX, deltaZ);
 
-            if (distance < 80) {
-                let newAngle = Math.atan2(deltaX, deltaZ);  // Get the angle from the cow to 
+            if (distance < 150) {
+                let newAngle = Math.atan2(deltaX, deltaZ); // Get the angle from the cow to
                 let mouseQuaternion = new THREE.Quaternion();
-    
-                let adjustedAngle = (newAngle + 3 * Math.PI / 2) / 2;
+
+                let adjustedAngle = (newAngle + (3 * Math.PI) / 2) / 2;
 
                 mouseQuaternion.y = Math.sin(adjustedAngle);
                 mouseQuaternion.w = Math.cos(adjustedAngle);
-                
-                this.group.quaternion.slerp(mouseQuaternion, Math.min(1, this.rotationSpeed * deltaTime));
+
+                this.group.quaternion.slerp(
+                    mouseQuaternion,
+                    Math.min(1, this.rotationSpeed * deltaTime)
+                );
 
                 // If close enough to the mouse, stop moving.
-                if (distance < 25) return;
+                if (distance < 70) return;
 
                 this.group.translateX(this.speed * 0.5 * deltaTime);
 
@@ -155,7 +158,10 @@ class Cow {
                 }
                 break;
             case "rotating":
-                this.group.quaternion.slerp(this.quaternion, Math.min(1, this.rotationSpeed * deltaTime)); // Apply rotation.
+                this.group.quaternion.slerp(
+                    this.quaternion,
+                    Math.min(1, this.rotationSpeed * deltaTime)
+                ); // Apply rotation.
 
                 // To check if cube is done rotating, check if the angle to new quaternion is within 0.01.
                 if (this.group.quaternion.angleTo(this.quaternion) < 0.5) {
