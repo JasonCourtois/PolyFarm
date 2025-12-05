@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
-import random from "./utils.js";
+import { random, getEuclidianDistnace } from "./utils";
 
 type AnimationState = "moving" | "rotating" | "waiting";
 
@@ -26,26 +26,7 @@ class Cow {
 
     // Takes scene as input and adds cow to the scene.
     constructor(x: number, z: number, id: number, scene: THREE.Scene, loader: GLTFLoader) {
-        // // Create Three js mesh
-        // let geometry = new THREE.BoxGeometry(20, 20, 20);
-        // let material = new THREE.MeshStandardMaterial({ color: random(0, 0xffffff) });
-        // this.mesh = new THREE.Mesh(geometry, material);
-
-        // // Add a small box on the front (positive X side) to indicate direction
-        // let frontBoxGeometry = new THREE.BoxGeometry(3, 8, 8);
-        // let frontBoxMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-        // let frontBox = new THREE.Mesh(frontBoxGeometry, frontBoxMaterial);
-        // frontBox.position.x = 11.5; // Position it on the front face (half of main box size + half of front box size)
-        // this.mesh.add(frontBox);
-
-        // // Add similar box on the side pointing in positive z side
-        // let zBoxGeometry = new THREE.BoxGeometry(3, 8, 8);
-        // let zBoxMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        // let zBox = new THREE.Mesh(zBoxGeometry, zBoxMaterial);
-        // zBox.position.z = 11.5; // Position it on the front face (half of main box size + half of front box size)
-        // this.mesh.add(zBox);
-        
-        // TODO: Determine how to assign IDs to objects.            
+        // TODO: Determine how to assign IDs to objects.
         this.id = id;
 
         // Determine when first move should occur.
@@ -60,7 +41,7 @@ class Cow {
             this.group.position.x = x;
             this.group.position.z = z;
             this.group.position.y = random(-0.1, 0.1); // Slightly move the mesh on the y axis to combat z clipping.
-            
+
             // Increase scale of cow
             this.group.scale.x = 25;
             this.group.scale.y = 25;
@@ -69,9 +50,66 @@ class Cow {
             // Determine random rotation - then apply it instantly.
             this.updateQuaternion();
             this.group.quaternion.slerp(this.quaternion, 1);
-        })
 
-        
+            let r = random(0, 255);
+            let g = random(0, 255);
+            let b = random(0, 255);
+
+            this.group.traverse((child: any) => {
+                if (child.isMesh && child.material.map) {
+                    // Get original texture and create canvas to manipulate pixels.
+                    const originalTexture = child.material.map;
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+
+                    if (!ctx) return;   // If we cannot get context, abort - here to satisfy typescript.
+
+                    // Get texture image, set canvas to be same size as image.
+                    const img = originalTexture.image;
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                        
+                    // Draw image to the 2D canvas.
+                    ctx.drawImage(img, 0, 0);
+
+                    // Get pixel RGB values for manipulation.
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+
+                    for (let i = 0; i < data.length; i += 4) {
+                        // If r, g, b values are in the brown range of original cow, we want to set this to new random color.
+                        if (data[i] > 50 && data[i] < 70 && data[i + 1] > 40 && data[i + 1] < 60 && data[i + 2] > 30 && data[i + 2] < 40) {
+                            data[i] = r;
+                            data[i + 1] = g;
+                            data[i + 2] = b;
+                        }
+                    }
+
+                    // Replace canvas with new image data.
+                    ctx.putImageData(imageData, 0, 0);
+
+                    // Create new texture - Nearest Filter used for pixel art to avoid blurring.
+                    const newTexture = new THREE.CanvasTexture(canvas);
+                    newTexture.magFilter = THREE.NearestFilter;
+                    newTexture.minFilter = THREE.NearestFilter;
+
+                    // Copy texture data from original texture to ensure it maps to model correctly.
+                    newTexture.wrapS = originalTexture.wrapS;
+                    newTexture.wrapT = originalTexture.wrapT;
+                    newTexture.repeat.copy(originalTexture.repeat);
+                    newTexture.offset.copy(originalTexture.offset);
+                    newTexture.center.copy(originalTexture.center);
+                    newTexture.rotation = originalTexture.rotation;
+                    newTexture.flipY = originalTexture.flipY;
+                    newTexture.colorSpace = originalTexture.colorSpace;
+
+                    // Mark the new texture and child object to update
+                    newTexture.needsUpdate = true;
+                    child.material.map = newTexture;
+                    child.material.needsUpdate = true;
+                }
+            });
+        });
     }
 
     // Generates a random number of seconds until the next move should be attempted.
@@ -85,10 +123,6 @@ class Cow {
 
         this.quaternion.y = Math.sin(newAngle / 2);
         this.quaternion.w = Math.cos(newAngle / 2);
-    }
-
-    private getEuclidianDistnace(deltaX: number, deltaZ: number) {
-        return Math.sqrt(deltaX ** 2 + deltaZ ** 2);
     }
 
     // Movement system is essentially a finite state machine. Mob goes from waiting -> rotating -> moving -> waiting.
@@ -120,7 +154,7 @@ class Cow {
             let deltaX = mouseX - this.group.position.x;
             let deltaZ = mouseZ - this.group.position.z;
 
-            let distance = this.getEuclidianDistnace(deltaX, deltaZ);
+            let distance = getEuclidianDistnace(deltaX, deltaZ);
 
             if (distance < 150) {
                 let newAngle = Math.atan2(deltaX, deltaZ); // Get the angle from the cow to

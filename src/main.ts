@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./cow";
-import random from "./utils";
+import { random } from "./utils";
 
 // Scene variables
 let renderer: THREE.WebGLRenderer;
@@ -18,7 +18,7 @@ let animals: Cow[] = [];
 
 let plane: THREE.Mesh;
 
-let worldSize = 400;
+let worldSize = 1000;
 
 let finishedLoading = false;
 
@@ -56,7 +56,6 @@ window.onload = function () {
 
     // Make the plane lie horizontal on the XZ ground plane
     plane.rotateX(Math.PI / 2);
-    plane.position.y -= 10.1; // Move plane down slightly past cube to avoid clipping.
     scene.add(plane);
 
     const loader = new GLTFLoader();
