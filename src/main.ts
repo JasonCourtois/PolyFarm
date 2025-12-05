@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/Addons.js";
+import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./cow";
 import random from "./utils";
 
@@ -19,6 +19,8 @@ let animals: Cow[] = [];
 let plane: THREE.Mesh;
 
 let worldSize = 400;
+
+let finishedLoading = false;
 
 window.onload = function () {
     // create scene
@@ -57,15 +59,16 @@ window.onload = function () {
     plane.position.y -= 10.1; // Move plane down slightly past cube to avoid clipping.
     scene.add(plane);
 
+    const loader = new GLTFLoader();
+
     // Add cows
     for (let i = 0; i < 25; i++) {
         // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
         let x = random(-worldSize/2, worldSize/2);
         let z = random(-worldSize/2, worldSize/2);
 
-        let cow = new Cow(x, z, i);
+        let cow = new Cow(x, z, i, scene, loader);
         animals.push(cow);
-        scene.add(cow.mesh);
     }
 
     // setup interaction
@@ -73,9 +76,14 @@ window.onload = function () {
 
     // call animation/rendering loop
     animate();
+
+    finishedLoading = true;
 };
 
 window.addEventListener("mousemove", (event) => {
+    // If onload function hasn't finished, then exit early.
+    if (!finishedLoading) return;
+
     const mouse = new THREE.Vector2();
     // Normalize values - this code is similar to assignment 3 torus world.
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
