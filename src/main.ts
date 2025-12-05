@@ -9,6 +9,7 @@ let controls: OrbitControls;
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
 let clock: THREE.Clock;
+let plane: THREE.Mesh;
 
 let mouseX: undefined | number;
 let mouseZ: undefined | number;
@@ -16,11 +17,12 @@ let mouseZ: undefined | number;
 // Array for all animals
 let animals: Cow[] = [];
 
-let plane: THREE.Mesh;
 
 let worldSize = 1000;
 
-let finishedLoading = false;
+let gltfLoader = new GLTFLoader();  // Loader set to be a global variable because it is ued in onclick and onload callbacks.
+
+let finishedLoading = false;    // Used to exit mousemove callback early when scene hasn't finished loading.
 
 window.onload = function () {
     // create scene
@@ -58,15 +60,13 @@ window.onload = function () {
     plane.rotateX(Math.PI / 2);
     scene.add(plane);
 
-    const loader = new GLTFLoader();
-
     // Add cows
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 50; i++) {
         // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
         let x = random(-worldSize/2, worldSize/2);
         let z = random(-worldSize/2, worldSize/2);
 
-        let cow = new Cow(x, z, i, scene, loader);
+        let cow = new Cow(x, z, i, scene, gltfLoader);
         animals.push(cow);
     }
 
@@ -103,6 +103,15 @@ window.addEventListener("mousemove", (event) => {
         mouseZ = undefined;
     }
 });
+
+// Place cows!
+window.addEventListener("mousedown", () => {
+    console.log(animals);
+    if (mouseX && mouseZ) {
+        let cow = new Cow(mouseX, mouseZ, animals.length, scene, gltfLoader);
+        animals.push(cow);
+    }
+})
 
 function animate() {
     requestAnimationFrame(animate);
