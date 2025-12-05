@@ -29,9 +29,24 @@ class Cow {
         let material = new THREE.MeshStandardMaterial({ color: random(0, 0xffffff) });
         this.mesh = new THREE.Mesh(geometry, material);
 
+        // Add a small box on the front (positive X side) to indicate direction
+        let frontBoxGeometry = new THREE.BoxGeometry(3, 8, 8);
+        let frontBoxMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+        let frontBox = new THREE.Mesh(frontBoxGeometry, frontBoxMaterial);
+        frontBox.position.x = 11.5; // Position it on the front face (half of main box size + half of front box size)
+        this.mesh.add(frontBox);
+
+        // Add similar box on the side pointing in positive z side
+        let zBoxGeometry = new THREE.BoxGeometry(3, 8, 8);
+        let zBoxMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        let zBox = new THREE.Mesh(zBoxGeometry, zBoxMaterial);
+        zBox.position.z = 11.5; // Position it on the front face (half of main box size + half of front box size)
+        this.mesh.add(zBox);
+
         // Move mesh to desired position.
         this.mesh.position.x = x;
         this.mesh.position.z = z;
+        this.mesh.position.y = random(-0.1, 0.1); // Slightly move the mesh on the y axis to combat z clipping.
 
         // Determine when first move should occur.
         this.moveInterval = this.generateMoveInterval();
@@ -57,6 +72,10 @@ class Cow {
         this.quaternion.w = Math.cos(newAngle / 2);
     }
 
+    private getEuclidianDistnace(deltaX: number, deltaZ: number) {
+        return Math.sqrt(deltaX ** 2 + deltaZ ** 2);
+    }
+
     // Movement system is essentially a finite state machine. Mob goes from waiting -> rotating -> moving -> waiting.
     /*
         When Waiting
@@ -77,7 +96,35 @@ class Cow {
             - If distance to move is less than 0, return to waiting state.
     
     */
-    animate(deltaTime: number) {
+    animate(deltaTime: number, mouseX: undefined | number, mouseZ: undefined | number) {
+        // If mouse is on the screen and plane.
+        if (mouseX && mouseZ) {
+            let deltaX = mouseX - this.mesh.position.x;
+            let deltaZ = mouseZ - this.mesh.position.z;
+
+            let distance = this.getEuclidianDistnace(deltaX, deltaZ);
+
+            if (distance < 80) {
+                let newAngle = Math.atan2(deltaX, deltaZ);  // Get the angle from the cow to 
+                let mouseQuaternion = new THREE.Quaternion();
+                
+    
+                let adjustedAngle = (newAngle + 3 * Math.PI / 2) / 2;
+
+                mouseQuaternion.y = Math.sin(adjustedAngle);
+                mouseQuaternion.w = Math.cos(adjustedAngle);
+                
+                this.mesh.quaternion.slerp(mouseQuaternion, 0.05);
+
+                // If close enough to the mouse, stop moving.
+                if (distance < 25) return;
+
+                this.mesh.translateX(this.speed * 0.5);
+
+                return;
+            }
+        }
+
         switch (this.state) {
             case "waiting":
                 this.moveTimer += deltaTime; // Add time to move timer

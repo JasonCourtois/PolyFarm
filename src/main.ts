@@ -10,8 +10,13 @@ let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
 let clock: THREE.Clock;
 
+let mouseX: undefined | number;
+let mouseZ: undefined | number;
+
 // Array for all animals
 let animals: Cow[] = [];
+
+let plane: THREE.Mesh;
 
 let worldSize = 400;
 
@@ -45,7 +50,7 @@ window.onload = function () {
 
     let planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
     let planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-    let plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane = new THREE.Mesh(planeGeometry, planeMaterial);
 
     // Make the plane lie horizontal on the XZ ground plane
     plane.rotateX(Math.PI / 2);
@@ -53,7 +58,7 @@ window.onload = function () {
     scene.add(plane);
 
     // Add cows
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 25; i++) {
         // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
         let x = random(-worldSize/2, worldSize/2);
         let z = random(-worldSize/2, worldSize/2);
@@ -70,6 +75,28 @@ window.onload = function () {
     animate();
 };
 
+window.addEventListener("mousemove", (event) => {
+    const mouse = new THREE.Vector2();
+    // Normalize values - this code is similar to assignment 3 torus world.
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // With vector 2 z will default to 0, placing it right on the camera.
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObject(plane);
+
+    // When mouse position is undefined, animals will move naturally.
+    if (intersects.length > 0) {
+        mouseX = intersects[0].point.x;
+        mouseZ = intersects[0].point.z;
+    } else {
+        mouseX = undefined;
+        mouseZ = undefined;
+    }
+});
+
 function animate() {
     requestAnimationFrame(animate);
 
@@ -77,7 +104,7 @@ function animate() {
     let deltaTime = clock.getDelta();
 
     animals.forEach((animal) => {
-        animal.animate(deltaTime);
+        animal.animate(deltaTime, mouseX, mouseZ);
     });
 
     controls.update();
