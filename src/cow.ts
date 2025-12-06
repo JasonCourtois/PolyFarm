@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import { random, getEuclidianDistnace, rgbToHsv, hsvToRgb } from "./utils";
+import type { AnimationState } from "./utils";
 
-type AnimationState = "moving" | "rotating" | "waiting";
+
 
 class Cow {
     // Shared original texture across all instances
