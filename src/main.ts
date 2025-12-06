@@ -106,7 +106,6 @@ window.addEventListener("mousemove", (event) => {
 
 // Place cows!
 window.addEventListener("mousedown", () => {
-    console.log(animals);
     if (mouseX && mouseZ) {
         let cow = new Cow(mouseX, mouseZ, animals.length, scene, gltfLoader);
         animals.push(cow);

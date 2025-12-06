@@ -5,6 +5,9 @@ import { random, getEuclidianDistnace, rgbToHsv, hsvToRgb } from "./utils";
 type AnimationState = "moving" | "rotating" | "waiting";
 
 class Cow {
+    // Shared original texture across all instances
+    private static originalTextureMap: any;
+
     // General Fields
     group: THREE.Group | undefined;
     id: number;
@@ -64,23 +67,35 @@ class Cow {
             // Determine random rotation - then apply it instantly.
             this.updateQuaternion();
             this.group.quaternion.slerp(this.quaternion, 1);
+            
+            // Store original texture for recoloring only once (shared across all cows)
+            if (!Cow.originalTextureMap) {
+                this.group.traverse((child: any) => {
+                    if (child.isMesh && child.material.map) {
+                        Cow.originalTextureMap = child.material.map.clone();
+                    }
+                });
+            }
+            
+            let newHue = random(0, 360);
 
-            this.randomizeColor();
+            this.changeColor(newHue);
         });
     }
 
-    private randomizeColor() {
+    changeColor = (newHue: number) => {
         // If model hasn't finished loading, then exit.
         if (!this.group) return;
-
-        let newHue = random(0, 360);
 
         // Now should this code be done with shaders? Most likely. However, I have no idea where to begin with that.
         // So for now I'm leaving my hacky solution of editing the pixels of the texture file directly.
         this.group.traverse((child: any) => {
             if (child.isMesh && child.material.map) {
-                // Get original texture and create canvas to manipulate pixels.
-                const originalTexture = child.material.map;
+                // Get original texture from shared class storage
+                const originalTexture = Cow.originalTextureMap;
+
+                if (!originalTexture) return;
+                
                 const canvas = document.createElement("canvas");
                 const ctx = canvas.getContext("2d");
 
