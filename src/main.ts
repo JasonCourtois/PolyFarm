@@ -37,7 +37,10 @@ window.onload = function () {
     let zNear = 1;
     let zFar = 10000;
     camera = new THREE.PerspectiveCamera(fov, ratio, zNear, zFar);
-    camera.position.set(0, 150, 50);
+    camera.position.set(0, 150, 0);
+
+    // Set skybox color
+    scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
     // create renderer and add canvas
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -52,8 +55,20 @@ window.onload = function () {
     light.position.set(10, 100, 10);
     scene.add(light);
 
+    // Setup plane for ground with texture.
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load("./Blender/Grass Texture.png");
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    texture.repeat.set(worldSize/20, worldSize/20);
+
+
     let planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
-    let planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    let planeMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
     plane = new THREE.Mesh(planeGeometry, planeMaterial);
 
     // Make the plane lie horizontal on the XZ ground plane
@@ -61,10 +76,11 @@ window.onload = function () {
     scene.add(plane);
 
     // Add cows
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 25; i++) {
         // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
-        let x = random(-worldSize/2, worldSize/2);
-        let z = random(-worldSize/2, worldSize/2);
+        // modifier of 200 to prevent animals spawning right at edge of world.
+        let x = random((-worldSize/2) + 200, (worldSize/2) - 200);
+        let z = random((-worldSize/2) + 200, (worldSize/2) - 200);
 
         let cow = new Cow(x, z, i, scene, gltfLoader);
         animals.push(cow);

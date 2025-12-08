@@ -26,13 +26,13 @@ class Cow {
     }; // These color values are in the brown range for thw cows skin. leaving the eyes, white spots, and smaller details.
 
     // Movement Properties
-    private speed = 40; // Speed of movement - larger numbers will look like teleportation. This value is adjusted by deltaTime for framerate.
-    private rotationSpeed = 2.5; // Rotation speed - This number is modified by deltaTime to adjust for framerate.
+    private speed = 70; // Speed of movement - larger numbers will look like teleportation. This value is adjusted by deltaTime for framerate.
+    private rotationSpeed = 3; // Rotation speed - This number is modified by deltaTime to adjust for framerate.
     private minDistance = 25; // Minimum distance that animal can move when movement started.
     private maxDistance = 65; // Maximum distance that animal
     private minMoveInterval = 3; // Minimum time in seconds until next move will be attempted.
     private maxMoveInterval = 10; // Maximum time in seconds until next move will be attempted.
-    private mouseFollowRange = 220; // Max range cow will start following the mouse
+    private mouseFollowRange = 300; // Max range cow will start following the mouse
     private mouseFollowLimit = 100; // Acts as boundary around mouse, animal will only get this many meters close to mouse when following.
 
 
