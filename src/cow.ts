@@ -24,12 +24,17 @@ class Cow {
     // Movement Properties
     private speed = 40; // Speed of movement - larger numbers will look like teleportation. This value is adjusted by deltaTime for framerate.
     private rotationSpeed = 2.5; // Rotation speed - This number is modified by deltaTime to adjust for framerate.
-    private minDistance = 15; // Minimum distance that animal can move when movement started.
-    private maxDistance = 50; // Maximum distance that animal
+    private minDistance = 25; // Minimum distance that animal can move when movement started.
+    private maxDistance = 65; // Maximum distance that animal
     private minMoveInterval = 3; // Minimum time in seconds until next move will be attempted.
     private maxMoveInterval = 10; // Maximum time in seconds until next move will be attempted.
     private mouseFollowRange = 220; // Max range cow will start following the mouse
     private mouseFollowLimit = 100; // Acts as boundary around mouse, animal will only get this many meters close to mouse when following.
+
+
+    // Animation properties
+    private mixer: THREE.AnimationMixer | undefined;
+    private walkAction: THREE.AnimationAction | undefined;
 
     // Movement state variables.
     private moveInterval: number; // How many seconds until next move should occur.
@@ -64,6 +69,11 @@ class Cow {
             // Determine random rotation - then apply it instantly.
             this.updateQuaternion();
             this.group.quaternion.slerp(this.quaternion, 1);
+
+            this.mixer = new THREE.AnimationMixer(this.group);
+
+            this.walkAction = this.mixer.clipAction(gltf.animations[0]);
+
 
             this.randomizeColor();
         });
@@ -182,6 +192,8 @@ class Cow {
     
     */
     animate(deltaTime: number, mouseX: undefined | number, mouseZ: undefined | number) {
+       this.mixer?.update(deltaTime);
+
         // If glb file hasn't finished loading yet, exit.
         if (!this.group) return;
 
@@ -193,6 +205,8 @@ class Cow {
             let distance = getEuclidianDistnace(deltaX, deltaZ);
 
             if (distance < this.mouseFollowRange && distance > this.mouseFollowLimit) {
+                this.walkAction?.play();
+
                 let newAngle = Math.atan2(deltaX, deltaZ); // Get the angle from the cow to
                 let mouseQuaternion = new THREE.Quaternion();
 
@@ -215,6 +229,7 @@ class Cow {
 
         switch (this.state) {
             case "waiting":
+                this.walkAction?.stop(); // Fade out over 0.3 seconds instead of abrupt stop
                 this.moveTimer += deltaTime; // Add time to move timer
 
                 // If enough time has passed, roll for movement.
@@ -226,6 +241,8 @@ class Cow {
                 }
                 break;
             case "rotating":
+                this.walkAction?.play();
+
                 this.group.quaternion.slerp(
                     this.quaternion,
                     Math.min(1, this.rotationSpeed * deltaTime)
@@ -238,6 +255,8 @@ class Cow {
                 }
                 break;
             case "moving":
+                this.walkAction?.play();
+
                 this.distanceToMove -= this.speed * deltaTime;
                 this.group.translateX(this.speed * deltaTime);
 
