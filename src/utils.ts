@@ -95,3 +95,5 @@ export const hsvToRgb = (h: number, s: number, v: number): [number, number, numb
 
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 };
+
+export type AnimationState = "moving" | "rotating" | "waiting";
