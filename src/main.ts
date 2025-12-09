@@ -57,7 +57,7 @@ window.onload = function () {
 
     // Setup plane for ground with texture.
     const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load("./Blender/Grass Texture.png");
+    const texture = textureLoader.load("/blender/Grass Texture.png");
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.magFilter = THREE.NearestFilter;

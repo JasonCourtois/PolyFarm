@@ -55,7 +55,7 @@ class Cow {
         // Determine when first move should occur.
         this.moveInterval = this.generateMoveInterval();
 
-        loader.load("./Blender/cow.glb", (gltf) => {
+        loader.load("/blender/cow.glb", (gltf) => {
             scene.add(gltf.scene);
 
             this.group = gltf.scene;
