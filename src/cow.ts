@@ -8,6 +8,7 @@ import type { AnimationState } from "./utils";
 class Cow {
     // Shared original texture across all instances
     private static originalTextureMap: any;
+    private static worldSize = Number(import.meta.env.VITE_WORLDSIZE) || 1;
 
     // General Fields
     group: THREE.Group | undefined;
@@ -48,7 +49,7 @@ class Cow {
     private distanceToMove = 0; // No movement to start
 
     // Takes scene as input and adds cow to the scene.
-    constructor(x: number, z: number, id: number, scene: THREE.Scene, loader: GLTFLoader) {
+    constructor(x: number, z: number, id: number, scene: THREE.Scene, loader: GLTFLoader, hue?: number) {
         // TODO: Determine how to assign IDs to objects.
         this.id = id;
 
@@ -66,9 +67,7 @@ class Cow {
             this.group.position.y = random(-0.1, 0.1); // Slightly move the mesh on the y axis to combat z clipping.
 
             // Increase scale of cow
-            this.group.scale.x = 25;
-            this.group.scale.y = 25;
-            this.group.scale.z = 25;
+            this.group.scale.addScalar(25);
 
             // Determine random rotation - then apply it instantly.
             this.updateQuaternion();
@@ -83,7 +82,8 @@ class Cow {
                 });
             }
             
-            let newHue = random(0, 360);
+            // If hue was given, use that hue. otherwise create a random hue.
+            let newHue = hue ? hue : random(0, 360);
 
             this.mixer = new THREE.AnimationMixer(this.group);
 
@@ -274,6 +274,20 @@ class Cow {
 
                 this.distanceToMove -= this.speed * deltaTime;
                 this.group.translateX(this.speed * deltaTime);
+
+                // Keep in bounds on x position.
+                if (this.group.position.x > Cow.worldSize / 2) {
+                    this.group.position.x = Cow.worldSize / 2;
+                } else if (this.group.position.x < - Cow.worldSize / 2) {
+                    this.group.position.x = - Cow.worldSize / 2;
+                }
+
+                // Keep in bounds on z position.
+                if (this.group.position.z > Cow.worldSize / 2) {
+                    this.group.position.z = Cow.worldSize / 2;
+                } else if (this.group.position.z < - Cow.worldSize / 2) {
+                    this.group.position.z = - Cow.worldSize / 2
+                }
 
                 if (this.distanceToMove < 0) {
                     this.state = "waiting";
