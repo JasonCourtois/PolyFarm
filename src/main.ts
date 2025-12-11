@@ -121,7 +121,7 @@ window.onload = function () {
     }
 
     // Add cows
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 100; i++) {
         // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
         // modifier of 200 to prevent animals spawning right at edge of world.
         let x = random((-worldSize/2) + 200, (worldSize/2) - 200);
