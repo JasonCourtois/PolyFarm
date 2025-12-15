@@ -64,7 +64,7 @@ class Cow {
             this.movementController = new MovementController(this.group, gltf);
             
             // If hue isn't defined, we create a normal brown cow.
-            if (hue) this.changeColor(hue);
+            if (hue !== undefined) this.changeColor(hue);
         });
     }
 
