@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
-import Cow from "./cow";
+import Cow from "./Cow";
 import ClickAnimation from "./ClickAnimation";
 import { random } from "./utils";
-import { Tweakpane } from "./tweakpane";
+import { Tweakpane } from "./Tweakpane";
 
 // Scene variables
 let renderer: THREE.WebGLRenderer;

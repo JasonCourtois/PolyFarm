@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import { random, rgbToHsv, hsvToRgb } from "./utils";
-import { MovementController } from "./movementController";
+import { MovementController } from "./MovementController";
 
 class Cow {
     // Shared original texture across all instances

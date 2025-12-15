@@ -1,8 +1,7 @@
 import type { GLTF } from "three/examples/jsm/Addons.js";
 import type { AnimationState } from "./utils";
-import { getEuclidianDistnace } from "./utils";
+import { getEuclidianDistnace, random } from "./utils";
 import * as THREE from "three";
-import { random } from "./utils";
 
 export class MovementController {
     private static worldSize = Number(import.meta.env.VITE_WORLDSIZE) || 1;
