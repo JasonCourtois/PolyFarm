@@ -1,20 +1,17 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
-import { random, getEuclidianDistnace, rgbToHsv, hsvToRgb } from "./utils";
-import type { AnimationState } from "./utils";
-
-
+import { random, rgbToHsv, hsvToRgb } from "./utils";
+import { MovementController } from "./movementController";
 
 class Cow {
     // Shared original texture across all instances
     private static originalTextureMap: any;
-    private static worldSize = Number(import.meta.env.VITE_WORLDSIZE) || 1;
 
     // General Fields
     group: THREE.Group | undefined;
     id: number;
 
-    // Color properties
+    // Color Replacement properties
     private saturationModifier = 0.4; // Intensifier added to saturation of pixel
     private valueModifier = 0.4; // Intensifier added to value of pixel.
     private colorBounds = {
@@ -26,35 +23,13 @@ class Cow {
         bMin: 30,
     }; // These color values are in the brown range for thw cows skin. leaving the eyes, white spots, and smaller details.
 
-    // Movement Properties
-    private speed = 70; // Speed of movement - larger numbers will look like teleportation. This value is adjusted by deltaTime for framerate.
-    private rotationSpeed = 3; // Rotation speed - This number is modified by deltaTime to adjust for framerate.
-    private minDistance = 25; // Minimum distance that animal can move when movement started.
-    private maxDistance = 65; // Maximum distance that animal
-    private minMoveInterval = 3; // Minimum time in seconds until next move will be attempted.
-    private maxMoveInterval = 10; // Maximum time in seconds until next move will be attempted.
-    private mouseFollowRange = 300; // Max range cow will start following the mouse
-    private mouseFollowLimit = 100; // Acts as boundary around mouse, animal will only get this many meters close to mouse when following.
-
-
-    // Animation properties
-    private mixer: THREE.AnimationMixer | undefined;
-    private walkAction: THREE.AnimationAction | undefined;
-
-    // Movement state variables.
-    private moveInterval: number; // How many seconds until next move should occur.
-    private moveTimer = 0; // How many seconds have passed since last move.
-    private state: AnimationState = "waiting"; // Mob starts at waiting state.
-    private quaternion = new THREE.Quaternion(); // No rotation to start.
-    private distanceToMove = 0; // No movement to start
+    // Movement controller
+    private movementController: MovementController | undefined;
 
     // Takes scene as input and adds cow to the scene.
     constructor(x: number, z: number, id: number, scene: THREE.Scene, loader: GLTFLoader, hue?: number) {
         // TODO: Determine how to assign IDs to objects.
         this.id = id;
-
-        // Determine when first move should occur.
-        this.moveInterval = this.generateMoveInterval();
 
         loader.load("/PolyFarm/blender/cow.glb", (gltf) => {
             scene.add(gltf.scene);
@@ -68,10 +43,13 @@ class Cow {
 
             // Increase scale of cow
             this.group.scale.addScalar(25);
-
-            // Determine random rotation - then apply it instantly.
-            this.updateQuaternion();
-            this.group.quaternion.slerp(this.quaternion, 1);
+            // Determine random rotation
+            let newAngle = random(0, 2 * Math.PI);
+            let quaternion = new THREE.Quaternion;
+            quaternion.y = Math.sin(newAngle / 2);
+            quaternion.w = Math.cos(newAngle / 2);
+            // Apply that rotation instantly.
+            this.group.quaternion.slerp(quaternion, 1);
             
             // Store original texture for recoloring only once (shared across all cows)
             if (!Cow.originalTextureMap) {
@@ -81,15 +59,12 @@ class Cow {
                     }
                 });
             }
+
+            // define movement controller here
+            this.movementController = new MovementController(this.group, gltf);
             
-            // If hue was given, use that hue. otherwise create a random hue.
-            let newHue = hue ? hue : random(0, 360);
-
-            this.mixer = new THREE.AnimationMixer(this.group);
-
-            this.walkAction = this.mixer.clipAction(gltf.animations[0]);
-
-            this.changeColor(newHue);
+            // If hue isn't defined, we create a normal brown cow.
+            if (hue) this.changeColor(hue);
         });
     }
 
@@ -173,27 +148,15 @@ class Cow {
         });
     }
 
-    // Generates a random number of seconds until the next move should be attempted.
-    private generateMoveInterval() {
-        return random(this.minMoveInterval, this.maxMoveInterval);
-    }
-
-    // Updates the quaternion to be a random angle.
-    private updateQuaternion() {
-        let newAngle = random(0, 2 * Math.PI);
-
-        this.quaternion.y = Math.sin(newAngle / 2);
-        this.quaternion.w = Math.cos(newAngle / 2);
-    }
 
     // Movement system is essentially a finite state machine. Mob goes from waiting -> rotating -> moving -> waiting.
+    // Code for this is handled within the movement controller
     /*
+        If follow mouse is in range, follow users cursor on 2D plane, otherwise do the following:
         When Waiting
             - Increment move timer
             - If move timer is goes past move interval, reset move timer and call rotate
-            - Rotate might not advance state if mob decides to do nothing.
-            - If rotate passes idle check, determine a new angle and setup quaternion.
-            - If rotate passed idle check, advance state to rotating.
+            - Determine a new angle and setup quaternion.
 
         When rotating
             - slerp current quaternion
@@ -206,95 +169,8 @@ class Cow {
             - If distance to move is less than 0, return to waiting state.
     
     */
-    animate(deltaTime: number, mouseX: undefined | number, mouseZ: undefined | number) {
-       this.mixer?.update(deltaTime);
-
-        // If glb file hasn't finished loading yet, exit.
-        if (!this.group) return;
-
-        // If mouse is on the screen and plane.
-        if (mouseX && mouseZ) {
-            let deltaX = mouseX - this.group.position.x;
-            let deltaZ = mouseZ - this.group.position.z;
-
-            let distance = getEuclidianDistnace(deltaX, deltaZ);
-
-            if (distance < this.mouseFollowRange && distance > this.mouseFollowLimit) {
-                this.walkAction?.play();
-
-                let newAngle = Math.atan2(deltaX, deltaZ); // Get the angle from the cow to
-                let mouseQuaternion = new THREE.Quaternion();
-
-                let adjustedAngle = (newAngle + (3 * Math.PI) / 2) / 2;
-
-                mouseQuaternion.y = Math.sin(adjustedAngle);
-                mouseQuaternion.w = Math.cos(adjustedAngle);
-
-                this.group.quaternion.slerp(
-                    mouseQuaternion,
-                    Math.min(1, this.rotationSpeed * deltaTime)
-                );
-
-                this.group.translateX(this.speed * 0.5 * deltaTime);
-                
-                // This exits animate loop early, preventing the animal from straying from the mouse.
-                return;
-            }
-        }
-
-        switch (this.state) {
-            case "waiting":
-                this.walkAction?.stop(); // Fade out over 0.3 seconds instead of abrupt stop
-                this.moveTimer += deltaTime; // Add time to move timer
-
-                // If enough time has passed, roll for movement.
-                if (this.moveTimer > this.moveInterval) {
-                    this.moveTimer = 0;
-
-                    this.updateQuaternion();
-                    this.state = "rotating";
-                }
-                break;
-            case "rotating":
-                this.walkAction?.play();
-
-                this.group.quaternion.slerp(
-                    this.quaternion,
-                    Math.min(1, this.rotationSpeed * deltaTime)
-                ); // Apply rotation.
-
-                // To check if cube is done rotating, check if the angle to new quaternion is within 0.01.
-                if (this.group.quaternion.angleTo(this.quaternion) < 0.5) {
-                    this.distanceToMove = random(this.minDistance, this.maxDistance);
-                    this.state = "moving";
-                }
-                break;
-            case "moving":
-                this.walkAction?.play();
-
-                this.distanceToMove -= this.speed * deltaTime;
-                this.group.translateX(this.speed * deltaTime);
-
-                // Keep in bounds on x position.
-                if (this.group.position.x > Cow.worldSize / 2) {
-                    this.group.position.x = Cow.worldSize / 2;
-                } else if (this.group.position.x < - Cow.worldSize / 2) {
-                    this.group.position.x = - Cow.worldSize / 2;
-                }
-
-                // Keep in bounds on z position.
-                if (this.group.position.z > Cow.worldSize / 2) {
-                    this.group.position.z = Cow.worldSize / 2;
-                } else if (this.group.position.z < - Cow.worldSize / 2) {
-                    this.group.position.z = - Cow.worldSize / 2
-                }
-
-                if (this.distanceToMove < 0) {
-                    this.state = "waiting";
-                    this.moveInterval = this.generateMoveInterval();
-                }
-                break;
-        }
+    animate(deltaTime: number, followMouse: boolean, mouseX: undefined | number, mouseZ: undefined | number) {
+        this.movementController?.animate(deltaTime, followMouse, mouseX, mouseZ)
     }
 }
 

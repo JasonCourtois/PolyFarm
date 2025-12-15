@@ -3,6 +3,7 @@ import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./cow";
 import ClickAnimation from "./ClickAnimation";
 import { random } from "./utils";
+import { Tweakpane } from "./tweakpane";
 
 // Scene variables
 let renderer: THREE.WebGLRenderer;
@@ -15,6 +16,9 @@ let grassPlane: THREE.Mesh;
 let mouseX: undefined | number;
 let mouseZ: undefined | number;
 
+// Tweakpane class object
+let pane: Tweakpane;
+
 // Array for all animals
 let animals: Cow[] = [];
 
@@ -24,13 +28,16 @@ let worldSize = Number(import.meta.env.VITE_WORLDSIZE) || 1;
 
 if (worldSize == 1) console.log("Unable to find world size in .env file");
 
-let gltfLoader = new GLTFLoader();  // Loader set to be a global variable because it is ued in onclick and onload callbacks.
+let gltfLoader = new GLTFLoader(); // Loader set to be a global variable because it is ued in onclick and onload callbacks.
 
-let finishedLoading = false;    // Used to exit mousemove callback early when scene hasn't finished loading.
+let finishedLoading = false; // Used to exit mousemove callback early when scene hasn't finished loading.
 
 window.onload = function () {
     // create scene
     scene = new THREE.Scene();
+
+    // Create tweakpane object
+    pane = new Tweakpane();
 
     // Clock used to determine when movement should occur. Delta time is used so framerate won't affect performance.
     clock = new THREE.Clock();
@@ -68,18 +75,20 @@ window.onload = function () {
     grassTexture.minFilter = THREE.NearestFilter;
     grassTexture.colorSpace = THREE.SRGBColorSpace;
 
-    grassTexture.repeat.set(worldSize/20, worldSize/20);
-
+    grassTexture.repeat.set(worldSize / 20, worldSize / 20);
 
     let planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
-    let grassPlaneMaterial = new THREE.MeshBasicMaterial({ map: grassTexture, side: THREE.DoubleSide });
+    let grassPlaneMaterial = new THREE.MeshBasicMaterial({
+        map: grassTexture,
+        side: THREE.DoubleSide,
+    });
     grassPlane = new THREE.Mesh(planeGeometry, grassPlaneMaterial);
 
     // Make the plane lie horizontal on the XZ ground plane
     grassPlane.rotateX(Math.PI / 2);
     scene.add(grassPlane);
 
-    // Setup dirt walls around 
+    // Setup dirt walls around
     const dirtTexture = textureLoader.load("/PolyFarm/textures/Dirt Texture.png");
     dirtTexture.wrapS = THREE.RepeatWrapping;
     dirtTexture.wrapT = THREE.RepeatWrapping;
@@ -87,47 +96,49 @@ window.onload = function () {
     dirtTexture.minFilter = THREE.NearestFilter;
     dirtTexture.colorSpace = THREE.SRGBColorSpace;
 
-    dirtTexture.repeat.set(worldSize/20, worldSize/20);
+    dirtTexture.repeat.set(worldSize / 20, worldSize / 20);
 
-
-    let dirtPlaneMaterial = new THREE.MeshBasicMaterial({ map: dirtTexture, side: THREE.DoubleSide});
+    let dirtPlaneMaterial = new THREE.MeshBasicMaterial({
+        map: dirtTexture,
+        side: THREE.DoubleSide,
+    });
 
     for (let i = 0; i < 5; i++) {
         const dirtPlane = new THREE.Mesh(planeGeometry, dirtPlaneMaterial);
-        dirtPlane.translateY(- (worldSize / 2));
-        
+        dirtPlane.translateY(-(worldSize / 2));
+
         switch (i) {
             case 0:
                 dirtPlane.translateZ(worldSize / 2);
                 break;
             case 1:
-                dirtPlane.translateZ(- (worldSize / 2));
+                dirtPlane.translateZ(-(worldSize / 2));
                 break;
             case 2:
                 dirtPlane.translateX(worldSize / 2);
                 dirtPlane.rotateY(Math.PI / 2);
                 break;
             case 3:
-                dirtPlane.translateX(- (worldSize / 2));
+                dirtPlane.translateX(-(worldSize / 2));
                 dirtPlane.rotateY(Math.PI / 2);
                 break;
             case 4:
-                dirtPlane.translateY(- (worldSize / 2));
+                dirtPlane.translateY(-(worldSize / 2));
                 dirtPlane.rotateX(Math.PI / 2);
-                break;  
+                break;
         }
 
         scene.add(dirtPlane);
     }
 
     // Add cows
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 25; i++) {
         // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
         // modifier of 200 to prevent animals spawning right at edge of world.
-        let x = random((-worldSize/2) + 200, (worldSize/2) - 200);
-        let z = random((-worldSize/2) + 200, (worldSize/2) - 200);
+        let x = random(-worldSize / 2 + 200, worldSize / 2 - 200);
+        let z = random(-worldSize / 2 + 200, worldSize / 2 - 200);
 
-        let cow = new Cow(x, z, i, scene, gltfLoader);
+        let cow = new Cow(x, z, i, scene, gltfLoader, random(0, 360));
         animals.push(cow);
     }
 
@@ -168,15 +179,15 @@ window.addEventListener("mousemove", (event) => {
 // Place cows!
 window.addEventListener("mousedown", () => {
     if (mouseX && mouseZ) {
-        let hue = random(0, 360);
+        let hue = pane.settings.useNewHue ? pane.settings.hue : random(0, 360);
 
         let cow = new Cow(mouseX, mouseZ, animals.length, scene, gltfLoader, hue);
         animals.push(cow);
 
-        let click  = new ClickAnimation(mouseX, mouseZ, scene, hue);
+        let click = new ClickAnimation(mouseX, mouseZ, scene, hue);
         clickAnimations.push(click);
     }
-})
+});
 
 function animate() {
     requestAnimationFrame(animate);
@@ -186,7 +197,7 @@ function animate() {
 
     // Animate each animal.
     animals.forEach((animal) => {
-        animal.animate(deltaTime, mouseX, mouseZ);
+        animal.animate(deltaTime, pane.settings.followMouse, mouseX, mouseZ);
     });
 
     // Animate each click animation.
@@ -195,7 +206,7 @@ function animate() {
     });
 
     // Filter out any items that are ready to be deleted
-    clickAnimations = clickAnimations.filter(animation => !animation.deleteItem)
+    clickAnimations = clickAnimations.filter((animation) => !animation.deleteItem);
 
     controls.update();
     renderer.render(scene, camera);
