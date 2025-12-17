@@ -57,13 +57,28 @@ window.onload = function () {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+    renderer.shadowMap.enabled = true;
 
     // setup lights
     let ambientLight = new THREE.AmbientLight();
     scene.add(ambientLight);
 
     let light = new THREE.DirectionalLight(0xffffff, 5.0);
-    light.position.set(10, 100, 10);
+    light.position.set(0, 100, 0);
+    light.castShadow = true;
+    
+    // Configure shadow camera to cover the entire world
+    light.shadow.camera.left = -worldSize / 2;
+    light.shadow.camera.right = worldSize / 2;
+    light.shadow.camera.top = worldSize / 2;
+    light.shadow.camera.bottom = -worldSize / 2;
+    light.shadow.camera.near = 0.5;
+    light.shadow.camera.far = 100 + worldSize / 2 + 50;
+    
+    // Increase shadow map resolution for better quality
+    light.shadow.mapSize.width = 2048;
+    light.shadow.mapSize.height = 2048;
+    
     scene.add(light);
 
     // Setup plane for ground with texture.
@@ -78,14 +93,17 @@ window.onload = function () {
     grassTexture.repeat.set(worldSize / 20, worldSize / 20);
 
     let planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
-    let grassPlaneMaterial = new THREE.MeshBasicMaterial({
+    let grassPlaneMaterial = new THREE.MeshStandardMaterial({
         map: grassTexture,
         side: THREE.DoubleSide,
-    });
+        color: 0x8DB558, 
+    }); // Green color added to darken the grass texture from the directional light.
     grassPlane = new THREE.Mesh(planeGeometry, grassPlaneMaterial);
 
     // Make the plane lie horizontal on the XZ ground plane
     grassPlane.rotateX(Math.PI / 2);
+
+    grassPlane.receiveShadow = true;
     scene.add(grassPlane);
 
     // Setup dirt walls around
@@ -98,7 +116,7 @@ window.onload = function () {
 
     dirtTexture.repeat.set(worldSize / 20, worldSize / 20);
 
-    let dirtPlaneMaterial = new THREE.MeshBasicMaterial({
+    let dirtPlaneMaterial = new THREE.MeshStandardMaterial({
         map: dirtTexture,
         side: THREE.DoubleSide,
     });

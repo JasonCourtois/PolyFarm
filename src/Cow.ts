@@ -32,9 +32,14 @@ class Cow {
         this.id = id;
 
         loader.load("/PolyFarm/blender/cow.glb", (gltf) => {
-            scene.add(gltf.scene);
-
             this.group = gltf.scene;
+
+            // Enable shadows on all mesh children
+            this.group.traverse((child: any) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                }
+            });
 
             //Move mesh to desired position.
             this.group.position.x = x;
@@ -65,6 +70,8 @@ class Cow {
             
             // If hue isn't defined, we create a normal brown cow.
             if (hue !== undefined) this.changeColor(hue);
+
+            scene.add(this.group);
         });
     }
 
