@@ -6,3 +6,45 @@ body {
   height: 100%;
   overflow: hidden !important;
 }
+
+@font-face {
+  font-family: "Minecraft Regular";
+  font-style: normal;
+  font-weight: normal;
+  src: local("Minecraft Regular"),
+    url("/fonts/1_MinecraftRegular1.woff") format("woff");
+}
+
+/* Tweakpane doesn't have a variable for adjusting font size. 
+   This classname is the root div for tweakpane, all other items inherit font size from it.
+   Important tag is needed to take precedence over the inline styling given by tweakpane.*/
+.tp-rotv {
+  font-size: 15px !important;
+}
+
+:root {
+  --tp-base-font-family: "Minecraft Regular", sans-serif;
+  --tp-base-background-color: hsla(0, 0%, 66%, 1);
+  --tp-base-shadow-color: hsla(0, 0%, 0%, 1);
+  --tp-button-background-color: hsla(0, 0%, 46%, 1);
+  --tp-button-background-color-active: hsla(0, 0%, 61%, 1);
+  --tp-button-background-color-focus: hsla(0, 0%, 56%, 1);
+  --tp-button-background-color-hover: hsla(0, 0%, 51%, 1);
+  --tp-button-foreground-color: hsla(0, 0%, 100%, 1);
+  --tp-container-background-color: hsla(0, 0%, 0%, 0.3);
+  --tp-container-background-color-active: hsla(0, 0%, 15%, 0.3);
+  --tp-container-background-color-focus: hsla(0, 0%, 10%, 0.3);
+  --tp-container-background-color-hover: hsla(0, 0%, 5%, 0.3);
+  --tp-container-foreground-color: hsla(0, 0%, 100%, 0.8);
+  --tp-groove-foreground-color: hsla(0, 0%, 0%, 0.58);
+  --tp-input-background-color: hsla(0, 0%, 55%, 1);
+  --tp-input-background-color-active: rgba(102, 102, 102, 1);
+  --tp-input-background-color-focus: rgba(115, 115, 115, 1);
+  --tp-input-background-color-hover: rgba(128, 128, 128, 1);
+  --tp-input-foreground-color: hsla(0, 0%, 100%, 1);
+  --tp-label-foreground-color: hsla(0, 0%, 0%, 0.87);
+  --tp-monitor-background-color: hsla(0, 0%, 0%, 0.3);
+  --tp-monitor-foreground-color: hsla(0, 0%, 100%, 0.3);
+  --tp-blade-border-radius: 0px;
+  --tp-base-border-radius: 0px;
+}

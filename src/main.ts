@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./Cow";
+import Pig from "./Pig";
+import Animal from "./Animal";
 import ClickAnimation from "./ClickAnimation";
 import { random } from "./utils";
 import { Tweakpane } from "./Tweakpane";
@@ -20,7 +22,7 @@ let mouseZ: undefined | number;
 let pane: Tweakpane;
 
 // Array for all animals
-let animals: Cow[] = [];
+let animals: Animal[] = [];
 
 let clickAnimations: ClickAnimation[] = [];
 
@@ -156,8 +158,15 @@ window.onload = function () {
         let x = random(-worldSize / 2 + 200, worldSize / 2 - 200);
         let z = random(-worldSize / 2 + 200, worldSize / 2 - 200);
 
-        let cow = new Cow(x, z, i, scene, gltfLoader, random(0, 360));
-        animals.push(cow);
+        if (random(0, 100) > 50) {
+            let cow = new Cow(x, z, i, scene, gltfLoader, random(0, 360));
+            animals.push(cow);
+        } else {
+            let pig = new Pig(x, z, i, scene, gltfLoader, random(0, 360));
+            animals.push(pig);
+        }
+
+        
     }
 
     // setup interaction

@@ -7,7 +7,11 @@ export const getEuclidianDistnace = (deltaX: number, deltaZ: number) => {
 };
 
 // TODO: Mention this code in final report - Reference code for this functionhttps://gist.github.com/mjackson/5311256
-export const rgbToHsv = (r: number, g: number, b: number): [number, number, number] => {
+export const rgbToHsv = (
+    r: number,
+    g: number,
+    b: number
+): [number, number, number] => {
     // Normalize RGB values to [0, 1]
     // Pixel image data is actually in [0, 255] which is why I normalize it here.
     r /= 255;
@@ -42,7 +46,11 @@ export const rgbToHsv = (r: number, g: number, b: number): [number, number, numb
 };
 
 // TODO: Mention this code in final report - Reference code for this functionhttps://gist.github.com/mjackson/5311256
-export const hsvToRgb = (h: number, s: number, v: number): [number, number, number] => {
+export const hsvToRgb = (
+    h: number,
+    s: number,
+    v: number
+): [number, number, number] => {
     // Normalize hue to [0, 1]
     h /= 360;
 
@@ -97,3 +105,12 @@ export const hsvToRgb = (h: number, s: number, v: number): [number, number, numb
 };
 
 export type AnimationState = "moving" | "rotating" | "waiting";
+
+export type ColorBounds = {
+    rMax: number;
+    rMin: number;
+    gMax: number;
+    gMin: number;
+    bMax: number;
+    bMin: number;
+};

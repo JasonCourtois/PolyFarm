@@ -3,7 +3,7 @@ import type { AnimationState } from "./utils";
 import { getEuclidianDistnace, random } from "./utils";
 import * as THREE from "three";
 
-export class MovementController {
+export default class MovementController {
     private static worldSize = Number(import.meta.env.VITE_WORLDSIZE) || 1;
 
     // Object references.
@@ -142,6 +142,24 @@ export class MovementController {
     }
 
     // Main function that gets called by animal class.
+     /*
+        If follow mouse is in range, follow users cursor on 2D plane, otherwise do the following:
+        When Waiting
+            - Increment move timer
+            - If move timer is goes past move interval, reset move timer and call rotate
+            - Determine a new angle and setup quaternion.
+
+        When rotating
+            - slerp current quaternion
+            - When mob finished rotating which is approximated using angleTo between current and new rotations:
+            - Generate a distance to move forward and advance state to moving.
+
+        When moving
+            - Decrement the distance to move determined in the last step by value determined by speed.
+            - translate mob the amount set by speed.
+            - If distance to move is less than 0, return to waiting state.
+    
+    */
     animate(
         deltaTime: number,
         followMouse: boolean,
