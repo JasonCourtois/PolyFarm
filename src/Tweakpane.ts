@@ -47,7 +47,7 @@ export class Tweakpane {
             hidden: true
         });
 
-        const tempColor = coloring.addBinding(this.settings, "tempColor")
+        coloring.addBinding(this.settings, "tempColor")
         
         // Hide the custom hue slider when not needed
         customToggle.on("change", (event) => {
