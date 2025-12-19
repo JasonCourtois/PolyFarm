@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import Animal from "./Animal";
-import type { ColorBounds } from "./utils";
+import type { ColorBounds, SceneInfo } from "./utils";
 
 export default class Cow extends Animal {
     private static cowTextureMap: any;
@@ -34,7 +34,8 @@ export default class Cow extends Animal {
         id: number,
         scene: THREE.Scene,
         loader: GLTFLoader,
-        hue?: number
+        sceneInfo: SceneInfo,
+        hue?: number,
     ) {
         // Calls the parent animal constructor with custom values for file path, color bounds, saturation, and value modifiers.
         super(
@@ -47,6 +48,7 @@ export default class Cow extends Animal {
             Cow.colorBounds,
             Cow.saturationModifier,
             Cow.valueModifier,
+            sceneInfo,
             hue
         );
     }

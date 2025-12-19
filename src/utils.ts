@@ -1,12 +1,14 @@
+// Custom random function that allows for quick adjustment of min and max.
 export const random = (min: number, max: number) => {
     return Math.random() * (max - min) + min;
 };
 
+// Used for calculating distance between users mouse and animal.
 export const getEuclidianDistnace = (deltaX: number, deltaZ: number) => {
     return Math.sqrt(deltaX ** 2 + deltaZ ** 2);
 };
 
-// TODO: Mention this code in final report - Reference code for this functionhttps://gist.github.com/mjackson/5311256
+// Used in color replacement for animals - I referenced code found here https://gist.github.com/mjackson/5311256
 export const rgbToHsv = (
     r: number,
     g: number,
@@ -45,7 +47,7 @@ export const rgbToHsv = (
     return [h * 360, s, v];
 };
 
-// TODO: Mention this code in final report - Reference code for this functionhttps://gist.github.com/mjackson/5311256
+// Used in color replacement for animals - I referenced code found here https://gist.github.com/mjackson/5311256
 export const hsvToRgb = (
     h: number,
     s: number,
@@ -114,3 +116,9 @@ export type ColorBounds = {
     bMax: number;
     bMin: number;
 };
+
+export type SceneInfo = {
+    animalCount: number,
+    grassCount: number,
+    loadedCount: number
+}

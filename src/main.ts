@@ -2,10 +2,12 @@ import * as THREE from "three";
 import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./Cow";
 import Pig from "./Pig";
+import { initializeGrass } from "./Grass";
 import Animal from "./Animal";
 import ClickAnimation from "./ClickAnimation";
-import { random } from "./utils";
+import { random, type SceneInfo } from "./utils";
 import { Tweakpane } from "./Tweakpane";
+import LoadScreen from "./LoadScreen";
 
 // Scene variables
 let renderer: THREE.WebGLRenderer;
@@ -14,32 +16,34 @@ let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
 let clock: THREE.Clock;
 let grassPlane: THREE.Mesh;
+let worldSize = Number(import.meta.env.VITE_WORLDSIZE) || 1;
+if (worldSize == 1) console.log("Unable to find world size in .env file");
 
+// Mouse position
 let mouseX: undefined | number;
 let mouseZ: undefined | number;
 
-// Tweakpane class object
-let pane: Tweakpane;
+// User input settings
+let pane = new Tweakpane();
 
-// Array for all animals
+// Object array for animals and animations
 let animals: Animal[] = [];
-
 let clickAnimations: ClickAnimation[] = [];
-
-let worldSize = Number(import.meta.env.VITE_WORLDSIZE) || 1;
-
-if (worldSize == 1) console.log("Unable to find world size in .env file");
-
 let gltfLoader = new GLTFLoader(); // Loader set to be a global variable because it is ued in onclick and onload callbacks.
 
-let finishedLoading = false; // Used to exit mousemove callback early when scene hasn't finished loading.
+// Tracks how many animals should be in the scene, as well as how many have been fully loaded.
+// These variables are put in an object so they can be passed by reference.
+let sceneInfo: SceneInfo = {
+    animalCount: 50,
+    grassCount: 300,
+    loadedCount: 0
+}
+
+let loader = new LoadScreen(sceneInfo, pane);
 
 window.onload = function () {
     // create scene
     scene = new THREE.Scene();
-
-    // Create tweakpane object
-    pane = new Tweakpane();
 
     // Clock used to determine when movement should occur. Delta time is used so framerate won't affect performance.
     clock = new THREE.Clock();
@@ -146,23 +150,25 @@ window.onload = function () {
         scene.add(visualGrassPlane);
     }
 
+    // Load grass first because it loads much faster than the animals. 
+    // This makes the loading animation look better because the bar doesn't jump from 50% to disappearing.
+    initializeGrass(sceneInfo.grassCount, worldSize, scene, gltfLoader, sceneInfo);
+
     // Add cows
-    for (let i = 0; i < 0; i++) {
-        // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
+    for (let i = 0; i < sceneInfo.animalCount; i++) {
+        // World is centered at (0,0) so it extends in worldSize/2 in all directions.
         // modifier of 200 to prevent animals spawning right at edge of world.
         let x = random(-worldSize / 2 + 200, worldSize / 2 - 200);
         let z = random(-worldSize / 2 + 200, worldSize / 2 - 200);
-
+  
         if (random(0, 100) > 50) {
-            let cow = new Cow(x, z, i, scene, gltfLoader, random(0, 360));
+            let cow = new Cow(x, z, i, scene, gltfLoader, sceneInfo, random(0, 360));
             animals.push(cow);
         } else {
-            let pig = new Pig(x, z, i, scene, gltfLoader, random(0, 360));
+            let pig = new Pig(x, z, i, scene, gltfLoader, sceneInfo, random(0, 360));
             animals.push(pig);
         }
     }
-
-    
 
     // setup interaction
     controls = new OrbitControls(camera, renderer.domElement);
@@ -172,15 +178,15 @@ window.onload = function () {
     controls.maxDistance = 500;
     controls.maxPolarAngle = Math.PI / 5;
 
+   
+
     // call animation/rendering loop
     animate();
 
-    finishedLoading = true;
 };
 
 window.addEventListener("mousemove", (event) => {
-    // If onload function hasn't finished, then exit early.
-    if (!finishedLoading) return;
+    if (!loader.finishedLoading) return;
 
     const mouse = new THREE.Vector2();
     // Normalize values - this code is similar to assignment 3 torus world.
@@ -205,10 +211,10 @@ window.addEventListener("mousemove", (event) => {
 
 // Place cows!
 window.addEventListener("mousedown", () => {
-    if (mouseX && mouseZ) {
+    if (mouseX && mouseZ && loader.finishedLoading) {
         let hue = pane.settings.useNewHue ? pane.settings.hue : random(0, 360);
 
-        let cow = new Cow(mouseX, mouseZ, animals.length, scene, gltfLoader, hue);
+        let cow = new Cow(mouseX, mouseZ, animals.length, scene, gltfLoader, sceneInfo, hue);
         animals.push(cow);
 
         let click = new ClickAnimation(mouseX, mouseZ, scene, hue);
@@ -217,6 +223,10 @@ window.addEventListener("mousedown", () => {
 });
 
 function animate() {
+    if (!loader.finishedLoading) {
+        loader.recalculateLoad();
+    }
+
     requestAnimationFrame(animate);
 
     // Change in delta time used to calculate movements.

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import { random, rgbToHsv, hsvToRgb } from "./utils";
-import type { ColorBounds } from "./utils";
+import type { ColorBounds, SceneInfo } from "./utils";
 import MovementController from "./MovementController";
 
 // Parent class for all animals in the scene. Contains logic for re-coloring animals.
@@ -33,6 +33,7 @@ export default abstract class Animal {
         colorBounds: ColorBounds,
         saturationModifier: number,
         valueModifier: number,
+        sceneInfo: SceneInfo,
         hue?: number
     ) {
         // TODO: Determine how to assign IDs to objects.
@@ -85,6 +86,8 @@ export default abstract class Animal {
             // If hue was given, apply the color change.
             if (hue !== undefined) this.changeColor(hue);
 
+            // Increment loaded count to track loading percentage.
+            sceneInfo.loadedCount++;
             scene.add(this.group);
         });
     }

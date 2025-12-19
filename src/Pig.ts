@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import Animal from "./Animal";
-import type { ColorBounds } from "./utils";
+import type { ColorBounds, SceneInfo } from "./utils";
 
 export default class Pig extends Animal {
     private static pigTextureMap: any;
@@ -34,6 +34,7 @@ export default class Pig extends Animal {
         id: number,
         scene: THREE.Scene,
         loader: GLTFLoader,
+        sceneInfo: SceneInfo,
         hue?: number
     ) {
         // Calls the parent animal constructor with custom values for file path, color bounds, saturation, and value modifiers.
@@ -47,6 +48,7 @@ export default class Pig extends Animal {
             Pig.colorBounds,
             Pig.saturationModifier,
             Pig.valueModifier,
+            sceneInfo,
             hue
         );
     }
