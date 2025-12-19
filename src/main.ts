@@ -108,51 +108,46 @@ window.onload = function () {
     grassPlane.receiveShadow = true;
     scene.add(grassPlane);
 
-    // Setup dirt walls around
-    const dirtTexture = textureLoader.load("/PolyFarm/textures/Dirt Texture.png");
-    dirtTexture.wrapS = THREE.RepeatWrapping;
-    dirtTexture.wrapT = THREE.RepeatWrapping;
-    dirtTexture.magFilter = THREE.NearestFilter;
-    dirtTexture.minFilter = THREE.NearestFilter;
-    dirtTexture.colorSpace = THREE.SRGBColorSpace;
-
-    dirtTexture.repeat.set(worldSize / 20, worldSize / 20);
-
-    let dirtPlaneMaterial = new THREE.MeshStandardMaterial({
-        map: dirtTexture,
-        side: THREE.DoubleSide,
-    });
-
-    for (let i = 0; i < 5; i++) {
-        const dirtPlane = new THREE.Mesh(planeGeometry, dirtPlaneMaterial);
-        dirtPlane.translateY(-(worldSize / 2));
-
+    // Create 8 extra planes the user cannot interact with to cover background.
+    for (let i = 0; i < 8; i++) {
+        const visualGrassPlane = new THREE.Mesh(planeGeometry, grassPlaneMaterial);
         switch (i) {
             case 0:
-                dirtPlane.translateZ(worldSize / 2);
+                visualGrassPlane.translateZ(worldSize);
                 break;
             case 1:
-                dirtPlane.translateZ(-(worldSize / 2));
+                visualGrassPlane.translateZ(-worldSize);
                 break;
             case 2:
-                dirtPlane.translateX(worldSize / 2);
-                dirtPlane.rotateY(Math.PI / 2);
+                visualGrassPlane.translateX(worldSize);
                 break;
             case 3:
-                dirtPlane.translateX(-(worldSize / 2));
-                dirtPlane.rotateY(Math.PI / 2);
+                visualGrassPlane.translateX(-worldSize);
                 break;
             case 4:
-                dirtPlane.translateY(-(worldSize / 2));
-                dirtPlane.rotateX(Math.PI / 2);
+                visualGrassPlane.translateX(worldSize);
+                visualGrassPlane.translateZ(worldSize);
+                break;
+            case 5:
+                visualGrassPlane.translateX(-worldSize);
+                visualGrassPlane.translateZ(worldSize);
+                break;
+            case 6:
+                visualGrassPlane.translateX(worldSize);
+                visualGrassPlane.translateZ(-worldSize);
+                break;
+            case 7:
+                visualGrassPlane.translateX(-worldSize);
+                visualGrassPlane.translateZ(-worldSize);
                 break;
         }
 
-        scene.add(dirtPlane);
+        visualGrassPlane.rotateX(Math.PI / 2);
+        scene.add(visualGrassPlane);
     }
 
     // Add cows
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 0; i++) {
         // World is centered at (0,0) so it extends in worldSIze/2 in all directions.
         // modifier of 200 to prevent animals spawning right at edge of world.
         let x = random(-worldSize / 2 + 200, worldSize / 2 - 200);
@@ -165,12 +160,17 @@ window.onload = function () {
             let pig = new Pig(x, z, i, scene, gltfLoader, random(0, 360));
             animals.push(pig);
         }
-
-        
     }
+
+    
 
     // setup interaction
     controls = new OrbitControls(camera, renderer.domElement);
+    // Limit users camera movement that way they can't clip camera out of bounds or into animals.
+    controls.enablePan = false;
+    controls.minDistance = 200;
+    controls.maxDistance = 500;
+    controls.maxPolarAngle = Math.PI / 5;
 
     // call animation/rendering loop
     animate();
