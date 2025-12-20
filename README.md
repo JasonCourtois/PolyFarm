@@ -45,18 +45,18 @@ All textures seen in the project were taken from Minecraft itself or one of the 
 
 - Minecraft Cow texture used: https://minecraft.fandom.com/wiki/Cow#Textures
 
-- Minecraft Pig texture used = https://minecraft.fandom.com/wiki/Pig#Textures
+- Minecraft Pig texture used: https://minecraft.fandom.com/wiki/Pig#Textures
 
-- Minecraft Grass texture used = https://minecraft.fandom.com/wiki/Grass?file=Grass_%28item%29.png#Grass_3 
+- Minecraft Grass texture used: https://minecraft.fandom.com/wiki/Grass?file=Grass_%28item%29.png#Grass_3 
 
 - Minecraft Grass Block (ground) texture taken as a screenshot from Minecraft Java edition version 1.8.7
 
 I also referenced external code for converting rgb to hsv and vice versa.
 My deploy.yml script was also taken from the vite.dev guidebook for deploying static sites.
 
-- rgbToHsv and hsvToRgb = https://gist.github.com/mjackson/5311256
+- rgbToHsv and hsvToRgb: https://gist.github.com/mjackson/5311256
 
-- Deploy.yml script = https://vite.dev/guide/static-deploy#github-pages
+- Deploy.yml script: https://vite.dev/guide/static-deploy#github-pages
 
 # Acknowledgements
 
