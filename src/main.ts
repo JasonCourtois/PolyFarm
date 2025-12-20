@@ -252,10 +252,12 @@ function animate() {
     // Change in delta time used to calculate movements.
     let deltaTime = clock.getDelta();
 
-    // Animate each animal.
-    animals.forEach((animal) => {
-        animal.animate(deltaTime, pane.settings.mouseMode, mouseX, mouseZ);
-    });
+    // Animate each animal as long as animation pause isn't enabled.
+    if (!pane.settings.pauseAnimation) {
+        animals.forEach((animal) => {
+            animal.animate(deltaTime, pane.settings.mouseMode, mouseX, mouseZ);
+        });
+    }
 
     // Animate each click animation.
     clickAnimations.forEach((clickAnimation) => {

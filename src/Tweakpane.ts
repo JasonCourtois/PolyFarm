@@ -8,6 +8,7 @@ export type tweakpaneSettings = {
     clickToPlace: boolean;
     objectSelect: "cow" | "pig" | "grass";
     hue: number;
+    pauseAnimation: boolean;
 };
 
 export class Tweakpane {
@@ -22,6 +23,7 @@ export class Tweakpane {
             clickToPlace: true,
             objectSelect: "cow",
             hue: 0,
+            pauseAnimation: false,
         };
 
         this.pane = new Pane({
@@ -47,7 +49,7 @@ export class Tweakpane {
         });
 
         const customToggle = coloring.addBinding(this.settings, "colorMode", {
-            label: "Color Placement Mode",
+            label: "Color Select Mode",
             options: {
                 Random: "random",
                 "Custom Hue": "custom",
@@ -85,6 +87,10 @@ export class Tweakpane {
             title: "Objects",
             expanded: true,
         });
+
+        objects.addBinding(this.settings, "pauseAnimation", {
+            label: "Pause Animals",
+        })
 
         const placementEnabled = objects.addBinding(this.settings, "clickToPlace", {
             label: "Click to Create",
