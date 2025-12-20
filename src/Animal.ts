@@ -1,14 +1,13 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import { random, rgbToHsv, hsvToRgb } from "./utils";
-import type { ColorBounds, SceneInfo } from "./utils";
+import type { ColorBounds, MouseMode, SceneInfo } from "./utils";
 import MovementController from "./MovementController";
 
 // Parent class for all animals in the scene. Contains logic for re-coloring animals.
 export default abstract class Animal {
-    // General Fields
+    // Group which stores 3D mesh.
     group: THREE.Group | undefined;
-    id: number;
 
     // Movement controller
     private movementController: MovementController | undefined;
@@ -22,23 +21,19 @@ export default abstract class Animal {
     private saturationModifier: number;
     private valueModifier: number;
 
-    // Takes scene as input and adds cow to the scene.
+    // Constructor adds animal to scene and changes the color of the animal.
     constructor(
         x: number,
         z: number,
-        id: number,
         scene: THREE.Scene,
         loader: GLTFLoader,
-        modelPath: string, // New parameter
+        modelPath: string,
         colorBounds: ColorBounds,
         saturationModifier: number,
         valueModifier: number,
         sceneInfo: SceneInfo,
         hue?: number
     ) {
-        // TODO: Determine how to assign IDs to objects.
-        this.id = id;
-
         this.colorBounds = colorBounds;
 
         this.saturationModifier = saturationModifier;
@@ -47,7 +42,7 @@ export default abstract class Animal {
         loader.load(modelPath, (gltf) => {
             this.group = gltf.scene;
 
-            // Enable shadows on all mesh children
+            // Enable shadows on all children
             this.group.traverse((child: any) => {
                 if (child.isMesh) {
                     child.castShadow = true;
@@ -59,10 +54,10 @@ export default abstract class Animal {
             this.group.position.z = z;
             this.group.position.y = random(-0.1, 0.1); // Slightly move the mesh on the y axis to combat z clipping.
 
-            // Increase scale of cow
+            // Increase scale of animal.
             this.group.scale.addScalar(25);
 
-            // Determine random rotation
+            // Determine random initial rotation
             let newAngle = random(0, 2 * Math.PI);
             let quaternion = new THREE.Quaternion();
             quaternion.y = Math.sin(newAngle / 2);
@@ -70,8 +65,8 @@ export default abstract class Animal {
             // Apply that rotation instantly.
             this.group.quaternion.slerp(quaternion, 1);
 
-            // Store original texture for recoloring only once. 
-            // Each subclass will have a static variable to store texture, and all instances of each subclass share reference to that texture.
+            // Store original texture for recoloring only once.
+            // Each subclass will have a static variable to store texture, and all instances of each subclass share reference to that texture when recoloring.
             if (!this.getOriginalTexture()) {
                 this.group.traverse((child: any) => {
                     if (child.isMesh && child.material.map) {
@@ -80,10 +75,10 @@ export default abstract class Animal {
                 });
             }
 
-            // define movement controller here
+            // Handles movement and animation for animal. This needs to be defined here as the gltf object stores the animation info.
             this.movementController = new MovementController(this.group, gltf);
 
-            // If hue was given, apply the color change.
+            // If a hue was given, apply the color change.
             if (hue !== undefined) this.changeColor(hue);
 
             // Increment loaded count to track loading percentage.
@@ -98,6 +93,7 @@ export default abstract class Animal {
 
         // Now should this code be done with shaders? Most likely. However, I have no idea where to begin with that.
         // So for now I'm leaving my hacky solution of editing the pixels of the texture file directly.
+        // Update: the project is now due in 4 hours, I no longer have time to fix this lol.
         this.group.traverse((child: any) => {
             if (child.isMesh && child.material.map) {
                 // Get original texture from shared class storage
@@ -119,12 +115,7 @@ export default abstract class Animal {
                 ctx.drawImage(img, 0, 0);
 
                 // Get pixel RGB values for manipulation.
-                const imageData = ctx.getImageData(
-                    0,
-                    0,
-                    canvas.width,
-                    canvas.height
-                );
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
 
                 for (let i = 0; i < data.length; i += 4) {
@@ -181,15 +172,10 @@ export default abstract class Animal {
     // Code for this is handled within the movement controller
     animate(
         deltaTime: number,
-        followMouse: boolean,
+        followMouse: MouseMode,
         mouseX: undefined | number,
         mouseZ: undefined | number
     ) {
-        this.movementController?.animate(
-            deltaTime,
-            followMouse,
-            mouseX,
-            mouseZ
-        );
+        this.movementController?.animate(deltaTime, followMouse, mouseX, mouseZ);
     }
 }

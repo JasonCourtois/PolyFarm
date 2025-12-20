@@ -2,12 +2,13 @@ import * as THREE from "three";
 import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import Cow from "./Cow";
 import Pig from "./Pig";
-import { initializeGrass } from "./Grass";
 import Animal from "./Animal";
+import { initializeGrass, loadGrass } from "./Grass";
 import ClickAnimation from "./ClickAnimation";
 import { random, type SceneInfo } from "./utils";
 import { Tweakpane } from "./Tweakpane";
 import LoadScreen from "./LoadScreen";
+import HoverAnimation from "./HoverAnimation";
 
 // Scene variables
 let renderer: THREE.WebGLRenderer;
@@ -29,15 +30,16 @@ let pane = new Tweakpane();
 // Object array for animals and animations
 let animals: Animal[] = [];
 let clickAnimations: ClickAnimation[] = [];
-let gltfLoader = new GLTFLoader(); // Loader set to be a global variable because it is ued in onclick and onload callbacks.
+let gltfLoader = new GLTFLoader();
+let hoverAnimation: HoverAnimation;
 
 // Tracks how many animals should be in the scene, as well as how many have been fully loaded.
 // These variables are put in an object so they can be passed by reference.
 let sceneInfo: SceneInfo = {
     animalCount: 50,
-    grassCount: 300,
-    loadedCount: 0
-}
+    grassCount: 380,
+    loadedCount: 0,
+};
 
 let loader = new LoadScreen(sceneInfo, pane);
 
@@ -56,7 +58,7 @@ window.onload = function () {
     camera = new THREE.PerspectiveCamera(fov, ratio, zNear, zFar);
     camera.position.set(100, 600, 0);
 
-    // Set skybox color
+    // Set skybox color - shouldn't actually be seen in final product.
     scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
     // create renderer and add canvas
@@ -72,7 +74,7 @@ window.onload = function () {
     let light = new THREE.DirectionalLight(0xffffff, 5.0);
     light.position.set(0, 100, 0);
     light.castShadow = true;
-    
+
     // Configure shadow camera to cover the entire world
     light.shadow.camera.left = -worldSize / 2;
     light.shadow.camera.right = worldSize / 2;
@@ -80,16 +82,16 @@ window.onload = function () {
     light.shadow.camera.bottom = -worldSize / 2;
     light.shadow.camera.near = 0.5;
     light.shadow.camera.far = 100 + worldSize / 2 + 50;
-    
+
     // Increase shadow map resolution for better quality
     light.shadow.mapSize.width = 2048;
     light.shadow.mapSize.height = 2048;
-    
+
     scene.add(light);
 
     // Setup plane for ground with texture.
     const textureLoader = new THREE.TextureLoader();
-    const grassTexture = textureLoader.load("/PolyFarm/textures/Grass Texture.png");
+    const grassTexture = textureLoader.load("/PolyFarm/plane textures/Grass Texture.png");
     grassTexture.wrapS = THREE.RepeatWrapping;
     grassTexture.wrapT = THREE.RepeatWrapping;
     grassTexture.magFilter = THREE.NearestFilter;
@@ -102,7 +104,7 @@ window.onload = function () {
     let grassPlaneMaterial = new THREE.MeshStandardMaterial({
         map: grassTexture,
         side: THREE.DoubleSide,
-        color: 0x8DB558, 
+        color: 0x8db558,
     }); // Green color added to darken the grass texture from the directional light.
     grassPlane = new THREE.Mesh(planeGeometry, grassPlaneMaterial);
 
@@ -150,39 +152,40 @@ window.onload = function () {
         scene.add(visualGrassPlane);
     }
 
-    // Load grass first because it loads much faster than the animals. 
+    // Load grass first because it loads much faster than the animals.
     // This makes the loading animation look better because the bar doesn't jump from 50% to disappearing.
     initializeGrass(sceneInfo.grassCount, worldSize, scene, gltfLoader, sceneInfo);
 
-    // Add cows
+    // Add animals
     for (let i = 0; i < sceneInfo.animalCount; i++) {
         // World is centered at (0,0) so it extends in worldSize/2 in all directions.
         // modifier of 200 to prevent animals spawning right at edge of world.
-        let x = random(-worldSize / 2 + 200, worldSize / 2 - 200);
-        let z = random(-worldSize / 2 + 200, worldSize / 2 - 200);
-  
+        let x = random(-worldSize / 2 + 300, worldSize / 2 - 300);
+        let z = random(-worldSize / 2 + 300, worldSize / 2 - 300);
+
+        // 50/50 chance weather a cow or pig will spawn to start.
         if (random(0, 100) > 50) {
-            let cow = new Cow(x, z, i, scene, gltfLoader, sceneInfo, random(0, 360));
+            let cow = new Cow(x, z, scene, gltfLoader, sceneInfo, random(0, 360));
             animals.push(cow);
         } else {
-            let pig = new Pig(x, z, i, scene, gltfLoader, sceneInfo, random(0, 360));
+            let pig = new Pig(x, z, scene, gltfLoader, sceneInfo, random(0, 360));
             animals.push(pig);
         }
     }
 
+    hoverAnimation = new HoverAnimation(scene);
+
     // setup interaction
     controls = new OrbitControls(camera, renderer.domElement);
+
     // Limit users camera movement that way they can't clip camera out of bounds or into animals.
     controls.enablePan = false;
     controls.minDistance = 200;
     controls.maxDistance = 500;
     controls.maxPolarAngle = Math.PI / 5;
 
-   
-
     // call animation/rendering loop
     animate();
-
 };
 
 window.addEventListener("mousemove", (event) => {
@@ -211,11 +214,28 @@ window.addEventListener("mousemove", (event) => {
 
 // Place cows!
 window.addEventListener("mousedown", () => {
-    if (mouseX && mouseZ && loader.finishedLoading) {
-        let hue = pane.settings.useNewHue ? pane.settings.hue : random(0, 360);
+    if (mouseX && mouseZ && loader.finishedLoading && pane.settings.clickToPlace) {
+        let hue: number | undefined =
+            pane.settings.colorMode === "custom" ? pane.settings.hue : random(0, 360);
 
-        let cow = new Cow(mouseX, mouseZ, animals.length, scene, gltfLoader, sceneInfo, hue);
-        animals.push(cow);
+        if (pane.settings.colorMode === "original") {
+            hue = undefined;
+        }
+
+        if (pane.settings.objectSelect === "cow") {
+            let cow = new Cow(mouseX, mouseZ, scene, gltfLoader, sceneInfo, hue);
+            animals.push(cow);
+        } else if (pane.settings.objectSelect === "pig") {
+            let pig = new Pig(mouseX, mouseZ, scene, gltfLoader, sceneInfo, hue);
+            animals.push(pig);
+        } else if (pane.settings.objectSelect === "grass") {
+            loadGrass(mouseX, mouseZ, scene, gltfLoader, sceneInfo);
+        }
+
+        // If hue wasn't defined for animal creation, generate a random one for the click animation.
+        if (hue === undefined) {
+            hue = random(0, 360);
+        }
 
         let click = new ClickAnimation(mouseX, mouseZ, scene, hue);
         clickAnimations.push(click);
@@ -234,7 +254,7 @@ function animate() {
 
     // Animate each animal.
     animals.forEach((animal) => {
-        animal.animate(deltaTime, pane.settings.followMouse, mouseX, mouseZ);
+        animal.animate(deltaTime, pane.settings.mouseMode, mouseX, mouseZ);
     });
 
     // Animate each click animation.
@@ -244,6 +264,8 @@ function animate() {
 
     // Filter out any items that are ready to be deleted
     clickAnimations = clickAnimations.filter((animation) => !animation.deleteItem);
+
+    hoverAnimation.animate(mouseX, mouseZ, deltaTime);
 
     controls.update();
     renderer.render(scene, camera);

@@ -1,9 +1,12 @@
 import { Pane } from "tweakpane";
+import { hsvToRgb, type MouseMode } from "./utils";
 
 // Define type for what tweakpane settings should look like
 export type tweakpaneSettings = {
-    followMouse: boolean;
-    useNewHue: boolean;
+    mouseMode: MouseMode;
+    colorMode: "random" | "custom" | "original";
+    clickToPlace: boolean;
+    objectSelect: "cow" | "pig" | "grass";
     hue: number;
 };
 
@@ -14,8 +17,10 @@ export class Tweakpane {
 
     constructor() {
         this.settings = {
-            followMouse: true,
-            useNewHue: false,
+            mouseMode: "follow",
+            colorMode: "random",
+            clickToPlace: true,
+            objectSelect: "cow",
             hue: 0,
         };
 
@@ -26,8 +31,14 @@ export class Tweakpane {
 
         this.hidePane();
 
-        this.pane.addBinding(this.settings, "followMouse", {
-            label: "Follow Mouse",
+        this.pane.addBinding(this.settings, "mouseMode", {
+            label: "Mouse Mode",
+            options: {
+                "Follow Mouse": "follow",
+                "Run from Mouse": "push",
+                "Orbit Mouse": "orbit",
+                None: "none",
+            },
         });
 
         const coloring = this.pane.addFolder({
@@ -35,8 +46,13 @@ export class Tweakpane {
             expanded: true,
         });
 
-        const customToggle = coloring.addBinding(this.settings, "useNewHue", {
-            label: "Custom Hue",
+        const customToggle = coloring.addBinding(this.settings, "colorMode", {
+            label: "Color Placement Mode",
+            options: {
+                Random: "random",
+                "Custom Hue": "custom",
+                Original: "original",
+            },
         });
 
         const hueSlider = coloring.addBinding(this.settings, "hue", {
@@ -47,9 +63,44 @@ export class Tweakpane {
             hidden: true,
         });
 
+        hueSlider.on("change", () => {
+            let huePreview: any = document.getElementsByClassName("tp-sldtxtv_t")[0];
+
+            let rgb = hsvToRgb(this.settings.hue, 1, 1);
+
+            huePreview.style.background = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+        });
+
         // Hide the custom hue slider when not needed
         customToggle.on("change", (event) => {
-            hueSlider.hidden = !event.value;
+            if (event.value === "custom") {
+                hueSlider.hidden = false;
+            } else {
+                hueSlider.hidden = true;
+            }
+            this.pane.refresh();
+        });
+
+        const objects = this.pane.addFolder({
+            title: "Objects",
+            expanded: true,
+        });
+
+        const placementEnabled = objects.addBinding(this.settings, "clickToPlace", {
+            label: "Click to Create",
+        });
+
+        const placementSelection = objects.addBinding(this.settings, "objectSelect", {
+            label: "Object Selection",
+            options: {
+                Cow: "cow",
+                Pig: "pig",
+                Grass: "grass",
+            },
+        });
+
+        placementEnabled.on("change", (event) => {
+            placementSelection.hidden = !event.value;
             this.pane.refresh();
         });
     }
@@ -60,5 +111,5 @@ export class Tweakpane {
 
     unhidePane = () => {
         this.pane.hidden = false;
-    }
+    };
 }

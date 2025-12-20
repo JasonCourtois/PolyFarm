@@ -9,8 +9,7 @@ export default class Pig extends Animal {
 
     // Custom color properties for the pig. This tells the color replacement what pixels to recolor.
     // Saturation and value (as in HSV colors) modifiers get ues with the hue to create a vibrant pig.
-    private static saturationModifier = 0.3;
-    private static valueModifier = -0.2;
+    // These color bounds target everything besides the eyes. Unlike the cow, most of the pigs texture needs to be replaced.
     private static colorBounds: ColorBounds = {
         rMax: 255,
         rMin: 0,
@@ -18,7 +17,9 @@ export default class Pig extends Animal {
         gMin: 0,
         bMax: 255,
         bMin: 0,
-    }; // These color values are in the brown range for thw cows skin. leaving the eyes, white spots, and smaller details.
+    };
+    private static saturationModifier = 0.3;
+    private static valueModifier = -0.2;
 
     protected getOriginalTexture() {
         return Pig.pigTextureMap;
@@ -31,7 +32,6 @@ export default class Pig extends Animal {
     constructor(
         x: number,
         z: number,
-        id: number,
         scene: THREE.Scene,
         loader: GLTFLoader,
         sceneInfo: SceneInfo,
@@ -41,7 +41,6 @@ export default class Pig extends Animal {
         super(
             x,
             z,
-            id,
             scene,
             loader,
             Pig.modelFilePath,

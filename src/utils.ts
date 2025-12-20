@@ -9,11 +9,7 @@ export const getEuclidianDistnace = (deltaX: number, deltaZ: number) => {
 };
 
 // Used in color replacement for animals - I referenced code found here https://gist.github.com/mjackson/5311256
-export const rgbToHsv = (
-    r: number,
-    g: number,
-    b: number
-): [number, number, number] => {
+export const rgbToHsv = (r: number, g: number, b: number): [number, number, number] => {
     // Normalize RGB values to [0, 1]
     // Pixel image data is actually in [0, 255] which is why I normalize it here.
     r /= 255;
@@ -48,11 +44,7 @@ export const rgbToHsv = (
 };
 
 // Used in color replacement for animals - I referenced code found here https://gist.github.com/mjackson/5311256
-export const hsvToRgb = (
-    h: number,
-    s: number,
-    v: number
-): [number, number, number] => {
+export const hsvToRgb = (h: number, s: number, v: number): [number, number, number] => {
     // Normalize hue to [0, 1]
     h /= 360;
 
@@ -117,8 +109,10 @@ export type ColorBounds = {
     bMin: number;
 };
 
+export type MouseMode = "follow" | "push" | "orbit" | "none";
+
 export type SceneInfo = {
-    animalCount: number,
-    grassCount: number,
-    loadedCount: number
-}
+    animalCount: number;
+    grassCount: number;
+    loadedCount: number;
+};

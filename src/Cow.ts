@@ -9,6 +9,7 @@ export default class Cow extends Animal {
 
     // Custom color properties for the cow. This tells the color replacement what pixels to recolor.
     // Saturation and value (as in HSV colors) modifiers get ues with the hue to create a vibrant cow.
+    // These color bounds target all of the brown pixels in the texture.
     private static colorBounds: ColorBounds = {
         rMax: 70,
         rMin: 50,
@@ -31,17 +32,15 @@ export default class Cow extends Animal {
     constructor(
         x: number,
         z: number,
-        id: number,
         scene: THREE.Scene,
         loader: GLTFLoader,
         sceneInfo: SceneInfo,
-        hue?: number,
+        hue?: number
     ) {
         // Calls the parent animal constructor with custom values for file path, color bounds, saturation, and value modifiers.
         super(
             x,
             z,
-            id,
             scene,
             loader,
             Cow.modelFilePath,

@@ -1,5 +1,5 @@
 import type { GLTF } from "three/examples/jsm/Addons.js";
-import type { AnimationState } from "./utils";
+import type { AnimationState, MouseMode } from "./utils";
 import { getEuclidianDistnace, random } from "./utils";
 import * as THREE from "three";
 
@@ -55,24 +55,48 @@ export default class MovementController {
     }
 
     // Returns false if the animal didn't fallow the mouse, returns true if the animal is following the mouse.
-    private handleMouseFollowing(deltaTime: number, followMouse: boolean, mouseX: number | undefined, mouseZ: number | undefined): boolean{
-        if (!mouseX || !mouseZ || !followMouse) return false;   // If mouse position isn't defined or followMouse is disabled, don't follow.
+    private handleMouseFollowing(
+        deltaTime: number,
+        mouseMode: MouseMode,
+        mouseX: number | undefined,
+        mouseZ: number | undefined
+    ): boolean {
+        if (!mouseX || !mouseZ || mouseMode === "none") return false; // If mouse position isn't defined or followMouse is disabled, don't follow.
 
         let deltaX = mouseX - this.group.position.x;
         let deltaZ = mouseZ - this.group.position.z;
 
         let distance = getEuclidianDistnace(deltaX, deltaZ);
 
-        if (distance < this.mouseFollowRange && distance > this.mouseFollowLimit) {
+        // Only follow mouse if within the mouse follow limits - we don't want the animals to get too close to the mouse.
+        let walkTowardsMouse =
+            distance < this.mouseFollowRange &&
+            distance > this.mouseFollowLimit &&
+            mouseMode === "follow";
+        // When running away or orbiting the mouse, we don't need to check for the mouse follow limit because they are running away.
+        let runFromMouse = distance < this.mouseFollowRange && mouseMode === "push";
+
+        let orbitMouse = distance < this.mouseFollowRange && mouseMode === "orbit";
+
+        if (walkTowardsMouse || runFromMouse || orbitMouse) {
             this.walkAction.play();
 
             let newAngle = Math.atan2(deltaX, deltaZ); // Get the angle from the cow to
             let mouseQuaternion = new THREE.Quaternion();
 
-            let adjustedAngle = (newAngle + (3 * Math.PI) / 2) / 2;
+            // Default angle is pointed towards mouse to follow it.
+            let adjustedAngle = newAngle + (3 * Math.PI) / 2;
 
-            mouseQuaternion.y = Math.sin(adjustedAngle);
-            mouseQuaternion.w = Math.cos(adjustedAngle);
+            if (runFromMouse) {
+                // Flip the angle 180 degrees to run away from mouse.
+                adjustedAngle += Math.PI;
+            } else if (orbitMouse) {
+                // Flip angle 90 degrees to orbit mouse.
+                adjustedAngle += Math.PI / 2;
+            }
+
+            mouseQuaternion.y = Math.sin(adjustedAngle / 2);
+            mouseQuaternion.w = Math.cos(adjustedAngle / 2);
 
             this.group.quaternion.slerp(
                 mouseQuaternion,
@@ -87,7 +111,7 @@ export default class MovementController {
     }
 
     private constrainMovement() {
-         // Keep in bounds on x position.
+        // Keep in bounds on x position.
         if (this.group.position.x > MovementController.worldSize / 2) {
             this.group.position.x = MovementController.worldSize / 2;
         } else if (this.group.position.x < -MovementController.worldSize / 2) {
@@ -142,7 +166,7 @@ export default class MovementController {
     }
 
     // Main function that gets called by animal class.
-     /*
+    /*
         If follow mouse is in range, follow users cursor on 2D plane, otherwise do the following:
         When Waiting
             - Increment move timer
@@ -162,14 +186,14 @@ export default class MovementController {
     */
     animate(
         deltaTime: number,
-        followMouse: boolean,
+        mouseMode: MouseMode,
         mouseX: undefined | number,
         mouseZ: undefined | number
     ) {
         this.mixer.update(deltaTime); // Advance animation.
 
         // Exit animation loop early if animal is following the mouse.
-        if (this.handleMouseFollowing(deltaTime, followMouse, mouseX, mouseZ)) return;
+        if (this.handleMouseFollowing(deltaTime, mouseMode, mouseX, mouseZ)) return;
 
         switch (this.state) {
             case "waiting":

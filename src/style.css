@@ -54,6 +54,18 @@ body {
     font-size: 15px !important;
 }
 
+/* The two below classes are used to overwrite the hue number input in my tweakpane */
+/* I disable the display of the text input and replace its parent div with a red background */
+/* In my tweakpane code, I update the CSS of the red background to match the selected hue, */
+.tp-txtv.tp-txtv-num {
+    display: none;
+}
+
+.tp-sldtxtv_t {
+    background-color: red;
+    border: 2px solid rgb(102, 102, 102);
+}
+
 :root {
     --tp-base-font-family: "Minecraft Regular", sans-serif;
     --tp-base-background-color: hsla(0, 0%, 66%, 1);

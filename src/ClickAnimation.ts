@@ -5,9 +5,9 @@ import { random } from "./utils";
 class ClickAnimation {
     groundPulse: THREE.Mesh;
     particles: THREE.Mesh[] = [];
-    deleteItem = false;     // Tells main thread to dispose of object when no longer needed.
+    deleteItem = false; // Tells main thread to dispose of object when no longer needed.
 
-    private ringGrowthRate = 15;    
+    private ringGrowthRate = 15;
     private particleGrowthRate = 20;
     private fallRate = 100;
     private numberOfParticles = 25;
@@ -45,13 +45,14 @@ class ClickAnimation {
 
         scene.add(this.groundPulse);
 
-        // Make a static reference to the existing scene.
+        // Make a static reference to the existing scene. Used to delete all meshes from scene when no longer needed.
         if (!ClickAnimation.sceneReference) {
             ClickAnimation.sceneReference = scene;
         }
     }
 
     private disposeObjects() {
+        // Remove the mesh from the scene, then dispose of the geometry and material from memory.
         ClickAnimation.sceneReference.remove(this.groundPulse);
         this.groundPulse.geometry.dispose();
         (this.groundPulse.material as THREE.Material).dispose();
@@ -71,6 +72,7 @@ class ClickAnimation {
             this.deleteItem = true;
             return;
         } else if (this.groundPulse.scale.x > 5) {
+            // Once max scale reached, sink ring below ground.
             this.groundPulse.position.y -= this.fallRate * deltaTime;
         } else {
             this.groundPulse.scale.addScalar(this.ringGrowthRate * deltaTime);
