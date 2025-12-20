@@ -31,7 +31,7 @@ npm run dev
 ```
 
 - If you wish to edit the 3D models or animations for the animals, download blender [here](https://www.blender.org/download/)!
-    - Once blender is installed, open any of the .blender files found in the public directory of this project.
+    - Once blender is installed, open any of the .blend files found in the public directory of this project.
 
 # References
 
